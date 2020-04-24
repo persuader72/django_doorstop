@@ -1,0 +1,15 @@
+{% extends 'requirements/base.html' %}
+{% load markdownify %}
+
+{% block page_title %}Requirement item {{ item.uid }}{% endblock %}
+
+{% block body_contents %}
+<div class="row">
+<ul>
+    <li><a href="{% url 'index-doc' doc.prefix %}">Document {{ doc.prefix }}</a></li>
+</ul>
+</div>
+<div class="row">
+    {{ item.text|markdownify }}
+</div>
+{% endblock %}

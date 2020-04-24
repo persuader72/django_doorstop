@@ -1,0 +1,26 @@
+{% extends 'requirements/base.html' %}
+{% load crispy_forms_tags %}
+
+{% block page_title %}Requirments{% endblock %}
+{% block body_title %}Requirement item {{ item.uid }} of Document {{ doc.prefix }}{% endblock %}
+{% block head_extra %}{{ form.media }}{% endblock %}
+
+{% block body_contents %}
+<div class="row">
+    <div class="col-md-3">
+        <ul>
+            <li><a href="{% url 'index-doc' doc.prefix %}">Return to list of {{ doc.prefix }}</a></li>
+            {% if not item.reviewed %}<li><a href="{% url 'item-review' doc.prefix item.uid %}">Review requisite</a>{% endif %}</li>
+            <li><a href="{% url 'item-details' doc.prefix item.uid %}">Mark as inactive</a></li>
+        </ul>
+    </div>
+    {{ form.media }}
+    <div class="col-md-8">
+        <form action="{% url 'item-update' doc.prefix item.uid %}" method="post">
+            {% csrf_token %}
+            {% crispy form %}
+        </form>
+    </div>
+    <div class="col-md-1"></div>
+</div>
+{% endblock %}

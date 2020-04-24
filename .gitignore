@@ -1,0 +1,7 @@
+
+*.sqlite3
+__pycache__
+.idea
+venv
+
+django_doorstop/settings.py
