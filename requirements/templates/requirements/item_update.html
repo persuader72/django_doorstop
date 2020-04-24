@@ -8,12 +8,29 @@
 {% block body_contents %}
 <div class="row">
     <div class="col-md-3">
+        <p>Operations</p>
         <ul>
             <li><a href="{% url 'index-doc' doc.prefix %}">Return to list of {{ doc.prefix }}</a></li>
-            {% if not item.reviewed %}<li><a href="{% url 'item-review' doc.prefix item.uid %}">Review requisite</a>{% endif %}</li>
+            {% if not item.reviewed %}<li><a href="{% url 'item-action' doc.prefix item.uid 'review' %}">Review requisite</a>{% endif %}</li>
             <li><a href="{% url 'item-details' doc.prefix item.uid %}">Mark as inactive</a></li>
         </ul>
-    </div>
+        {% if childs|length %}
+        <p>Child documents</p>
+        <ul>
+        {% for item in childs %}
+        <li><a href="{% url 'item-update' item.document.prefix item.uid %}">{{ item.uid }}</a></li>
+        {% endfor %}
+        </ul>
+        {% endif %}
+        {% if parents|length %}
+        <p>Parent documents</p>
+        <ul>
+        {% for item in parents %}
+        <li><a href="{% url 'item-update' item.document.prefix item.uid %}">{{ item.uid }}</a></li>
+        {% endfor %}
+        </ul>
+        {% endif %}
+     </div>
     {{ form.media }}
     <div class="col-md-8">
         <form action="{% url 'item-update' doc.prefix item.uid %}" method="post">

@@ -22,8 +22,7 @@ class DocumentUpdateForm(forms.Form):
     def __init__(self, doc=None, post=None):
         # type: (Optional[Document], QueryDict) -> None
         self._doc = doc  #type: Optional[Document]
-        initial_data = {}
-
+        initial_data = None
         if doc:
             initial_data['prefix'] = doc.prefix
             initial_data['sep'] = doc.sep
@@ -105,38 +104,34 @@ class ItemUpdateForm(forms.Form):
 
         return tuple(vv)
 
-    def __init__(self, item=None, post=None):
+    def __init__(self, data=None, item=None):
         # type: (Optional[Item], Optional[QueryDict]) -> None
         self._item = item  # type: Optional[Item]
         self._forgein_fields = []  # type: List[tuple]
         self._next_url = '/'
 
-        initial_data = {}
-        if item is not None:
+        initial_data = None
+        if item is not None and data is None:
+            initial_data = {}
             initial_data['uid'] = item.uid
             initial_data['level'] = item.level
             initial_data['header'] = item.header
             initial_data['text'] = item.text
-            initial_data['active'] = item.active
             initial_data['normative'] = item.normative
 
-        super().__init__(data=post, initial=initial_data)
+        super().__init__(data=data, initial=initial_data)
         layout = self.init_forgein_fields()
 
         self.helper = FormHelper(self)
         self.helper.layout = Layout(
             Row(
                 Column('uid', css_class='form-group col-md-3 mb-0'),
-                Column('header', css_class='form-group col-md-6 mb-0'),
+                Column('header', css_class='form-group col-md-4 mb-0'),
                 Column('level', css_class='form-group col-md-3 mb-0'),
+                Column('normative', css_class='form-group col-md-2 mb-0'),
                 css_class='form-row'
             ),
             'text',
-            Row(
-                Column('active', css_class='form-group col-md-6 mb-0'),
-                Column('normative', css_class='form-group col-md-6 mb-0'),
-                css_class='form-row'
-            ),
             Row(*layout, css_class='form-row'),
             Submit('submit', 'Submit')
         )
@@ -145,7 +140,6 @@ class ItemUpdateForm(forms.Form):
         self._item.level = self.cleaned_data['level']
         self._item.header = self.cleaned_data['header']
         self._item.text = self.cleaned_data['text']
-        self._item.active = self.cleaned_data['active']
         self._item.normative = self.cleaned_data['normative']
 
         for type, name in self._forgein_fields:

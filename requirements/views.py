@@ -114,7 +114,7 @@ class ItemUpdateView(RequirementMixin, TemplateView):
     def post(self, request, *args, **kwargs):
         self._doc = self._tree.find_document(kwargs['doc'])
         self._item = self._doc.find_item(kwargs['item'])
-        self._form = ItemUpdateForm(item=self._item, post=request.POST)
+        self._form = ItemUpdateForm(data=request.POST, item=self._item)
         return self.form_valid() if self._form.is_valid() else self.form_invalid()
 
     def get_context_data(self, **kwargs):
@@ -122,6 +122,8 @@ class ItemUpdateView(RequirementMixin, TemplateView):
         context['doc'] = self._doc
         context['item'] = self._item
         context['form'] = self._form
+        context['childs'] = self._item.find_child_items()
+        context['parents'] = self._item.parent_items
         return context
 
     def form_valid(self):
@@ -130,3 +132,38 @@ class ItemUpdateView(RequirementMixin, TemplateView):
 
     def form_invalid(self):
         return self.render_to_response(self.get_context_data(form=self._form))
+
+
+class ItemActionView(RequirementMixin, TemplateView):
+    template_name = 'requirements/item_action.html'
+
+    ACTION_REVIEW = 'review'
+    ACTION_NAMES = {'review': 'Review'}
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self._action = ''  # type: str
+        self._confirm = 0  # type: int
+
+    def get(self, request, *args, **kwargs):
+        self._doc = self._tree.find_document(kwargs['doc'])
+        self._item = self._doc.find_item(kwargs['item'])
+        self._action = kwargs['action']
+        context = self.get_context_data()
+        self._confirm = int(request.GET.get('confirm', '0'))
+
+        if self._confirm == 1:
+            if self._action == 'review':
+                self._item.review()
+                return HttpResponseRedirect(reverse('item-update', args=[self._doc.prefix, self._item.uid]))
+
+        return self.render_to_response(context)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['doc'] = self._doc
+        context['item'] = self._item
+        context['action'] = self._action
+        print(self._action)
+        context['action_name'] = ItemActionView.ACTION_NAMES[self._action]
+        return context
