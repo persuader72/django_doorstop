@@ -1,16 +1,44 @@
+import datetime
 from typing import Optional, List
 
 import yaml
 from crispy_forms.helper import FormHelper
-from crispy_forms.layout import Layout, Submit, Row, Column
+from crispy_forms.layout import Layout, Submit, Row, Column, Div
 
 from django import forms
 from django.http import QueryDict
 from django.urls import reverse, resolve
 
+from django_ace import AceWidget
+
 from doorstop import Document
 from doorstop.core import Item
 from doorstop.common import load_yaml
+
+
+class ItemCommentForm(forms.Form):
+    date = forms.DateTimeField(required=True, input_formats=['%Y-%m-%d %H:%M'])
+    author = forms.CharField(max_length=255, required=True)
+    message = forms.CharField(required=True)
+
+    def __init__(self):
+        initial = {
+            'date': datetime.datetime.now(),
+            'author': 's.pagnottelli'
+        }
+        super().__init__(initial=initial)
+        self.helper = FormHelper(self)
+        #self.helper.form_class = 'form-inline'
+        self.helper.field_template = 'bootstrap4/layout/inline_field.html'
+        self.helper.layout = Layout(
+            Row(
+                Column("date", css_class='col-md-2'),
+                Column("author", css_class='col-md-3'),
+                Column("message", css_class='col-md-6'),
+                Submit("Add comment", 'submit', css_class='col-md-1'),
+                css_class=''
+            ),
+        )
 
 
 class DocumentUpdateForm(forms.Form):
@@ -24,6 +52,7 @@ class DocumentUpdateForm(forms.Form):
         self._doc = doc  #type: Optional[Document]
         initial_data = None
         if doc:
+            initial_data = {}
             initial_data['prefix'] = doc.prefix
             initial_data['sep'] = doc.sep
             initial_data['digits'] = doc.digits
@@ -60,8 +89,22 @@ class DocumentUpdateForm(forms.Form):
             yaml_data = load_yaml(stream, self._doc.config)
             yaml_data_new = yaml.safe_load(self.cleaned_data['yaml'])
             yaml_data['attributes'] = yaml_data_new
-            text = self._doc._dump(yaml_data    )
+            text = self._doc._dump(yaml_data)
             self._doc._write(text, self._doc.config)
+
+
+class ItemRawEditForm(forms.Form):
+    yaml = forms.CharField(widget=AceWidget(mode='yaml', width='100%', height='640px', theme='github', toolbar=False, fontsize='24px'))
+
+    def __init__(self, data=None, item=None):
+        self._item = item  # type: Optional[Item]
+        initial = { 'yaml': item._read(item.path) }
+        super().__init__(data=data, initial=initial)
+        self.helper = FormHelper(self)
+        self.helper.add_input(Submit('submit', "Update file", css_class='btn-primary'))
+
+    def save(self):
+        self._item._write(self.cleaned_data['yaml'], self._item.path)
 
 
 class ItemUpdateForm(forms.Form):

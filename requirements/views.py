@@ -6,7 +6,7 @@ from django.views.generic import ListView, TemplateView
 from django.conf import settings
 from django_tables2 import SingleTableMixin
 
-from requirements.forms import ItemUpdateForm, DocumentUpdateForm
+from requirements.forms import ItemUpdateForm, DocumentUpdateForm, ItemCommentForm, ItemRawEditForm
 from requirements.tables import RequirementsTable
 
 from doorstop import Tree, Item
@@ -62,6 +62,10 @@ class ItemDetailView(RequirementMixin, TemplateView):
         context = super().get_context_data(**kwargs)
         context['doc'] = self._doc
         context['item'] = self._item
+        context['childs'] = self._item.find_child_items()
+        context['parents'] = self._item.parent_items
+        context['comments'] = self._item.get('comments')
+        context['form'] = ItemCommentForm()
         return context
 
 
@@ -97,6 +101,41 @@ class DocumentUpdateView(RequirementMixin, TemplateView):
         return self.render_to_response(self.get_context_data(form=self._form))
 
 
+class ItemRawFileView(RequirementMixin, TemplateView):
+    template_name = 'requirements/item_rawfile.html'
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self._form = None  # type: Optional[ItemUpdateForm]
+
+    def get(self, request, *args, **kwargs):
+        self._doc = self._tree.find_document(kwargs['doc'])
+        self._item = self._doc.find_item(kwargs['item'])
+        self._form = ItemRawEditForm(item=self._item)
+        context = self.get_context_data()
+        return self.render_to_response(context)
+
+    def post(self, request, *args, **kwargs):
+        self._doc = self._tree.find_document(kwargs['doc'])
+        self._item = self._doc.find_item(kwargs['item'])
+        self._form = ItemRawEditForm(data=request.POST, item=self._item)
+        return self.form_valid() if self._form.is_valid() else self.form_invalid()
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['doc'] = self._doc
+        context['item'] = self._item
+        context['form'] = self._form
+        return context
+
+    def form_valid(self):
+        self._form.save()
+        return HttpResponseRedirect(reverse('item-details', args=[self._doc.prefix, self._item.uid]))
+
+    def form_invalid(self):
+        return self.render_to_response(self.get_context_data(form=self._form))
+
+
 class ItemUpdateView(RequirementMixin, TemplateView):
     template_name = 'requirements/item_update.html'
 
@@ -122,8 +161,6 @@ class ItemUpdateView(RequirementMixin, TemplateView):
         context['doc'] = self._doc
         context['item'] = self._item
         context['form'] = self._form
-        context['childs'] = self._item.find_child_items()
-        context['parents'] = self._item.parent_items
         return context
 
     def form_valid(self):

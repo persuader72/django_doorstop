@@ -18,7 +18,7 @@
      </div>
     {{ form.media }}
     <div class="col-md-8">
-        <form action="{% url 'item-update' doc.prefix item.uid %}" method="post">
+        <form action="{% url 'item-rawfile' doc.prefix item.uid %}" method="post">
             {% csrf_token %}
             {% crispy form %}
         </form>

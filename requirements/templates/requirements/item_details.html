@@ -12,6 +12,7 @@
         <ul>
             <li><a href="{% url 'index-doc' doc.prefix %}">Return to list of {{ doc.prefix }}</a></li>
             <li><a href="{% url 'item-update' doc.prefix item.uid %}">Update req. of {{ item.uid }}</a></li>
+            <li><a href="{% url 'item-rawfile' doc.prefix item.uid %}">Edit raw file of {{ item.uid }}</a></li>
         </ul>
         {% if childs|length %}
         <p>Child documents</p>
@@ -34,7 +35,14 @@
     <div class="col-md-8">
         <h1>{{ item.uid }}: {{ item.header }}</h1>
         <p><em>Normative: {{ item.normative }} Reviewed: {{ item.reviewed }}</em></p>
+        <hr class="my-4">
         <p>{{ item.text|linebreaksbr }}</p>
+        <hr>
+        {% crispy form %}
+        <hr>
+        {% for comment in comments %}
+        <p>On {{ comment.date }} from {{ comment.author }}: <em>{{ comment.text }}</em></p>
+        {% endfor %}
     </div>
     <div class="col-md-1"></div>
 </div>
