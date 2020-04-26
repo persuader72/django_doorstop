@@ -52,6 +52,6 @@ class RequirementsTable(Table):
         html += format_html('<a href="{}" class="btn btn-outline-primary btn-sm" title="View item"><i class="fa fa-eye"></i></a>',
                             reverse('item-details', args=[record.document.prefix, record.uid.value]))
         html += format_html('<a href="{}" class="btn btn-outline-primary btn-sm" title="Delete item"><i class="fa fa-trash"></i></a>',
-                            reverse('item-delete', args=[record.document.prefix, record.uid.value]))
+                            reverse('item-action', args=[record.document.prefix, record.uid.value, 'delete']))
         html += format_html('</div></div>')
         return html

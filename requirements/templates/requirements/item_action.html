@@ -26,6 +26,19 @@
         </p>
     </div>
 {% endif %}
+
+{% if action == 'delete' %}
+    <div class="jumbotron">
+        <h1 class="display-4">Confirm delete!</h1>
+        <p class="lead">Yor are about the confirm the deletion of requirement {{ item.uid }}.</p>
+        <hr class="my-4">
+        <p>{{ item.text|linebreaksbr }}</p>
+        <p class="lead">
+            <a class="btn btn-primary btn-lg" href="{% url 'item-action' doc.prefix item.uid action %}?confirm=1" role="button">Delete requirement</a>
+        </p>
+    </div>
+{% endif %}
+
     </div>
     <div class="col-md-1"></div>
 </div>

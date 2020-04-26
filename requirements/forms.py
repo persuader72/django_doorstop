@@ -119,7 +119,8 @@ class ItemUpdateForm(forms.Form):
 
     def init_forgein_flat_array(self, name, field):
         sep = field['sep'] if 'sep' in field else ';'
-        self.fields[name] = forms.CharField(initial=sep.join(self._item.get(name)), required=False)
+        initial = sep.join(self._item.get(name)) if self._item else None
+        self.fields[name] = forms.CharField(initial=initial, required=False)
         self._forgein_fields.append((field['type'], name))
 
     def init_forgein_multi_choice(self, name, field):
@@ -127,11 +128,12 @@ class ItemUpdateForm(forms.Form):
         if 'choices' in field:
             for k in field['choices']:
                 vv.append((k, field['choices'][k],))
-        self.fields[name] = forms.MultipleChoiceField(choices=tuple(sorted(vv)), initial=self._item.get(name), required=False)
+        initial = self._item.get(name) if self._item else None
+        self.fields[name] = forms.MultipleChoiceField(choices=tuple(sorted(vv)), initial=initial, required=False)
         self._forgein_fields.append((field['type'], name))
 
     def init_forgein_fields(self):
-        ff = self._item.document.forgein_fields
+        ff = self._doc.forgein_fields
         if not ff:
             return tuple([])
 
@@ -149,9 +151,12 @@ class ItemUpdateForm(forms.Form):
 
         return tuple(vv)
 
-    def __init__(self, data=None, item=None):
-        # type: (Optional[QueryDict], Optional[Item]) -> None
+    def __init__(self, data=None, item=None, doc=None):
+        # type: (Optional[QueryDict], Optional[Item], Optional[Document]) -> None
         self._item = item  # type: Optional[Item]
+        self._doc = doc  # type: Optional[Document]
+        if self._doc is None and self._item is not None:
+            self._doc = self._item.document
         self._forgein_fields = []  # type: List[tuple]
 
         initial_data = None
@@ -176,7 +181,11 @@ class ItemUpdateForm(forms.Form):
         )
 
     def save(self):
-        self._item.level = self.cleaned_data['level']
+        #  type: () -> Item
+        if not self._item:
+            self._item = self._doc.add_item()
+        if self.cleaned_data['level']:
+            self._item.level = self.cleaned_data['level']
         self._item.header = self.cleaned_data['header']
         self._item.text = self.cleaned_data['text']
         self._item.normative = self.cleaned_data['normative']
@@ -188,6 +197,7 @@ class ItemUpdateForm(forms.Form):
                 self._item.set(name, self.cleaned_data[name].split(','))
 
         self._item.save()
+        return self._item
 
 
 class RequirementFilterForm(forms.Form):

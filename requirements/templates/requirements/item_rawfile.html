@@ -13,7 +13,6 @@
             <li><a href="{% url 'index-doc' doc.prefix %}">Return to list of {{ doc.prefix }}</a></li>
             <li><a href="{% url 'item-details' doc.prefix item.uid %}">Show req. {{ item.uid }}</a></li>
             {% if not item.reviewed %}<li><a href="{% url 'item-action' doc.prefix item.uid 'review' %}">Review requisite</a>{% endif %}</li>
-            <li><a href="{% url 'item-details' doc.prefix item.uid %}">Mark as inactive</a></li>
         </ul>
      </div>
     {{ form.media }}

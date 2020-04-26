@@ -38,7 +38,7 @@ class IndexView(RequirementMixin, SingleTableMixin, ListView):
     table_class = RequirementsTable
 
     def get(self, request, *args, **kwargs):
-        self._doc = self._tree.find_document(kwargs['doc'])
+        self._doc = self._tree.find_document(kwargs['doc']) if 'doc' in kwargs else self._tree.document
         return super().get(request, *args, **kwargs)
 
     def get_context_data(self, **kwargs):
@@ -159,27 +159,29 @@ class ItemUpdateView(RequirementMixin, TemplateView):
 
     def get(self, request, *args, **kwargs):
         self._doc = self._tree.find_document(kwargs['doc'])
-        self._item = self._doc.find_item(kwargs['item'])
-        self._form = ItemUpdateForm(item=self._item)
+        if kwargs['item'] != '__NEW__':
+            self._item = self._doc.find_item(kwargs['item'])
+        self._form = ItemUpdateForm(item=self._item, doc=self._doc)
         context = self.get_context_data()
         return self.render_to_response(context)
 
     def post(self, request, *args, **kwargs):
         self._doc = self._tree.find_document(kwargs['doc'])
-        self._item = self._doc.find_item(kwargs['item'])
-        self._form = ItemUpdateForm(data=request.POST, item=self._item)
+        if kwargs['item'] != '__NEW__':
+            self._item = self._doc.find_item(kwargs['item'])
+        self._form = ItemUpdateForm(data=request.POST, item=self._item, doc=self._doc)
         return self.form_valid() if self._form.is_valid() else self.form_invalid()
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['doc'] = self._doc
-        context['item'] = self._item
+        context['item'] = self._item if self._item else {'uid': '__NEW__'}
         context['form'] = self._form
         return context
 
     def form_valid(self):
-        self._form.save()
-        return HttpResponseRedirect(reverse('item-details', self._doc.prefix, self._item.uid))
+        item = self._form.save()
+        return HttpResponseRedirect(reverse('item-details', args=[self._doc.prefix, item.uid]))
 
     def form_invalid(self):
         return self.render_to_response(self.get_context_data(form=self._form))
@@ -189,7 +191,7 @@ class ItemActionView(RequirementMixin, TemplateView):
     template_name = 'requirements/item_action.html'
 
     ACTION_REVIEW = 'review'
-    ACTION_NAMES = {'review': 'Review'}
+    ACTION_NAMES = {'review': 'Review', 'disactivate': 'Mark inactive', 'delete': 'Delete'}
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -207,6 +209,9 @@ class ItemActionView(RequirementMixin, TemplateView):
             if self._action == 'review':
                 self._item.review()
                 return HttpResponseRedirect(reverse('item-update', args=[self._doc.prefix, self._item.uid]))
+            elif self._action == 'delete':
+                self._item.delete()
+                return HttpResponseRedirect(reverse('index-doc', args=[self._doc.prefix]))
 
         return self.render_to_response(context)
 
