@@ -3,11 +3,10 @@ from typing import Optional, List
 
 import yaml
 from crispy_forms.helper import FormHelper
-from crispy_forms.layout import Layout, Submit, Row, Column, Div
+from crispy_forms.layout import Layout, Submit, Row, Column
 
 from django import forms
 from django.http import QueryDict
-from django.urls import reverse, resolve
 
 from django_ace import AceWidget
 
@@ -28,7 +27,7 @@ class ItemCommentForm(forms.Form):
         }
         super().__init__(initial=initial)
         self.helper = FormHelper(self)
-        #self.helper.form_class = 'form-inline'
+        # self.helper.form_class = 'form-inline'
         self.helper.field_template = 'bootstrap4/layout/inline_field.html'
         self.helper.layout = Layout(
             Row(
@@ -49,15 +48,10 @@ class DocumentUpdateForm(forms.Form):
 
     def __init__(self, doc=None, post=None):
         # type: (Optional[Document], QueryDict) -> None
-        self._doc = doc  #type: Optional[Document]
+        self._doc = doc  # type: Optional[Document]
         initial_data = None
         if doc:
-            initial_data = {}
-            initial_data['prefix'] = doc.prefix
-            initial_data['sep'] = doc.sep
-            initial_data['digits'] = doc.digits
-            initial_data['yaml'] = ''
-
+            initial_data = {'prefix': doc.prefix, 'sep': doc.sep, 'digits': doc.digits, 'yaml': ''}
             with open(doc.config, 'r') as stream:
                 yaml_data = load_yaml(stream, doc.config)
                 if 'attributes' in yaml_data:
@@ -98,7 +92,7 @@ class ItemRawEditForm(forms.Form):
 
     def __init__(self, data=None, item=None):
         self._item = item  # type: Optional[Item]
-        initial = { 'yaml': item._read(item.path) }
+        initial = {'yaml': item._read(item.path) }
         super().__init__(data=data, initial=initial)
         self.helper = FormHelper(self)
         self.helper.add_input(Submit('submit', "Update file", css_class='btn-primary'))
@@ -148,19 +142,13 @@ class ItemUpdateForm(forms.Form):
         return tuple(vv)
 
     def __init__(self, data=None, item=None):
-        # type: (Optional[Item], Optional[QueryDict]) -> None
+        # type: (Optional[QueryDict], Optional[Item]) -> None
         self._item = item  # type: Optional[Item]
         self._forgein_fields = []  # type: List[tuple]
-        self._next_url = '/'
 
         initial_data = None
         if item is not None and data is None:
-            initial_data = {}
-            initial_data['uid'] = item.uid
-            initial_data['level'] = item.level
-            initial_data['header'] = item.header
-            initial_data['text'] = item.text
-            initial_data['normative'] = item.normative
+            initial_data = {'uid': item.uid, 'level': item.level, 'header': item.header, 'text': item.text, 'normative': item.normative}
 
         super().__init__(data=data, initial=initial_data)
         layout = self.init_forgein_fields()
@@ -185,17 +173,13 @@ class ItemUpdateForm(forms.Form):
         self._item.text = self.cleaned_data['text']
         self._item.normative = self.cleaned_data['normative']
 
-        for type, name in self._forgein_fields:
-            if type == 'multi':
+        for _type, name in self._forgein_fields:
+            if _type == 'multi':
                 self._item.set(name, self.cleaned_data[name])
-            elif type == 'flat':
+            elif _type == 'flat':
                 self._item.set(name, self.cleaned_data[name].split(','))
 
         self._item.save()
-
-    @property
-    def next_url(self):
-        return reverse('index-doc', args=[self._item.document.prefix])
 
 
 class RequirementFilterForm(forms.Form):

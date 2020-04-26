@@ -165,7 +165,7 @@ class ItemUpdateView(RequirementMixin, TemplateView):
 
     def form_valid(self):
         self._form.save()
-        return HttpResponseRedirect(self._form.next_url)
+        return HttpResponseRedirect(reverse('item-details', self._doc.prefix, self._item.uid))
 
     def form_invalid(self):
         return self.render_to_response(self.get_context_data(form=self._form))
