@@ -35,14 +35,30 @@
     <div class="col-md-8">
         <h1>{{ item.uid }}: {{ item.header }}</h1>
         <p><em>Normative: {{ item.normative }} Reviewed: {{ item.reviewed }}</em></p>
-        <hr class="my-4">
+        <hr>
         <p>{{ item.text|linebreaksbr }}</p>
+
+        {% if issues %}
+        <div class="alert alert-warning" role="alert">
+            <ul>
+            {% for issue in issues %}
+            <li>{{ issue }}</li>
+            {% endfor %}
+            </ul>
+        </div>
+        {% endif %}
+
         <hr>
         {% crispy form %}
         <hr>
+
+        {% if comments %}
+        <div class="alert alert-dark" role="alert">
         {% for comment in comments %}
         <p>On {{ comment.date }} from {{ comment.author }}: <em>{{ comment.text }}</em></p>
         {% endfor %}
+        </div>
+        {% endif %}
     </div>
     <div class="col-md-1"></div>
 </div>

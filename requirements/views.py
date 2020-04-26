@@ -6,6 +6,7 @@ from django.views.generic import ListView, TemplateView
 from django.conf import settings
 from django_tables2 import SingleTableMixin
 
+from doorstop.core.validators.item_validator import ItemValidator
 from requirements.forms import ItemUpdateForm, DocumentUpdateForm, ItemCommentForm, ItemRawEditForm
 from requirements.tables import RequirementsTable
 
@@ -37,7 +38,7 @@ class IndexView(RequirementMixin, SingleTableMixin, ListView):
     table_class = RequirementsTable
 
     def get(self, request, *args, **kwargs):
-        self._doc = self.get_doc(kwargs['doc']) if kwargs.get('doc', None) else self._tree.document  # type: Optional[Document]
+        self._doc = self._tree.find_document(kwargs['doc'])
         return super().get(request, *args, **kwargs)
 
     def get_context_data(self, **kwargs):
@@ -56,6 +57,16 @@ class ItemDetailView(RequirementMixin, TemplateView):
     def get(self, request, *args, **kwargs):
         self._doc = self._tree.find_document(kwargs['doc'])
         self._item = self._doc.find_item(kwargs['item'])
+        self._fprm = ItemCommentForm()
+        return super().get(request, *args, **kwargs)
+
+    def post(self, request, *args, **kwargs):
+        self._doc = self._tree.find_document(kwargs['doc'])
+        self._item = self._doc.find_item(kwargs['item'])
+        self._fprm = ItemCommentForm(request.POST)
+        if self._fprm.is_valid():
+            self._fprm.save(self._item)
+            self._fprm = ItemCommentForm()
         return super().get(request, *args, **kwargs)
 
     def get_context_data(self, **kwargs):
@@ -64,8 +75,11 @@ class ItemDetailView(RequirementMixin, TemplateView):
         context['item'] = self._item
         context['childs'] = self._item.find_child_items()
         context['parents'] = self._item.parent_items
+        validator = ItemValidator()
+        issues = validator.get_issues(self._item)
+        context['issues'] = [str(x) for x in issues]
         context['comments'] = self._item.get('comments')
-        context['form'] = ItemCommentForm()
+        context['form'] = self._fprm
         return context
 
 

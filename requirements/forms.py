@@ -16,16 +16,17 @@ from doorstop.common import load_yaml
 
 
 class ItemCommentForm(forms.Form):
-    date = forms.DateTimeField(required=True, input_formats=['%Y-%m-%d %H:%M'])
+    date = forms.DateTimeField(required=True, input_formats=['%Y-%m-%d %H:%M', '%Y-%m-%d %H:%M:%S'])
     author = forms.CharField(max_length=255, required=True)
-    message = forms.CharField(required=True)
+    text = forms.CharField(required=True)
 
-    def __init__(self):
+    def __init__(self, data=None):
         initial = {
             'date': datetime.datetime.now(),
-            'author': 's.pagnottelli'
+            'author': 's.pagnottelli',
+            'text': ''
         }
-        super().__init__(initial=initial)
+        super().__init__(data=data, initial=initial)
         self.helper = FormHelper(self)
         # self.helper.form_class = 'form-inline'
         self.helper.field_template = 'bootstrap4/layout/inline_field.html'
@@ -33,11 +34,18 @@ class ItemCommentForm(forms.Form):
             Row(
                 Column("date", css_class='col-md-2'),
                 Column("author", css_class='col-md-3'),
-                Column("message", css_class='col-md-6'),
+                Column("text", css_class='col-md-6'),
                 Submit("Add comment", 'submit', css_class='col-md-1'),
                 css_class=''
             ),
         )
+
+    def save(self, item):
+        # type: (Item) -> None
+        comments = item.get('comments')
+        comments.insert(0, {'date': self.cleaned_data['date'], 'author': self.cleaned_data['author'], 'text': self.cleaned_data['text']})
+        item.set('comments', comments)
+        item.save()
 
 
 class DocumentUpdateForm(forms.Form):
