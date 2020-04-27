@@ -3,6 +3,35 @@ from django.urls import reverse
 from django.utils.safestring import mark_safe
 from django_tables2 import Table, Column, BooleanColumn
 
+from doorstop import Item
+
+
+class ParentRequirementTable(Table):
+    document = Column(verbose_name='Doc.')
+    uid = Column(verbose_name='Parent req')
+    actions = Column(empty_values=())
+
+    class Meta:
+        template_name = "django_tables2/bootstrap4.html"
+
+    def __init__(self, data=None, item=None):
+        self._item = item
+        super().__init__(data, attrs={'class': 'table table-sm'})
+
+    # noinspection PyUnusedLocal
+    @staticmethod
+    def render_uid(value, record):
+        # type: (str, Item) -> str
+        return format_html('<a href="{}">{}</a>', reverse('item-details', args=[record.document.prefix, record.uid.value]), value)
+
+    def render_actions(self, record):
+        # type: (Item) -> str
+        html = format_html('<div class="btn-toolbar"><div class="btn-group">')
+        html += format_html('<a href="{}" class="btn btn-outline-primary btn-sm" title="Unlink parent req"><i class="fa fa-unlink"></i></a>',
+                            reverse('item-action-target', args=[self._item.document.prefix, self._item.uid.value, 'unlink', record.uid]))
+        html += format_html('</div></div>')
+        return html
+
 
 class RequirementsTable(Table):
     uid = Column()

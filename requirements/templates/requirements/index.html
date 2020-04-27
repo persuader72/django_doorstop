@@ -16,7 +16,7 @@
         {% for doc in docs %}
         <li>
             <a href="{% url 'index-doc' doc.prefix %}">{{ doc.prefix }}</a>
-            <a class="btn btn-outline-primary btn-sm" href="{% url 'document-update' doc.prefix %}"><i class="fa fa-pencil"></i></a>
+            <a class="btn btn-outline-primary btn-sm" href="{% url 'document-update' doc.prefix %}"><i class="fa fa-cog"></i></a>
         </li>
         {% endfor %}
     </ul>

@@ -8,7 +8,7 @@ from django_tables2 import SingleTableMixin
 
 from doorstop.core.validators.item_validator import ItemValidator
 from requirements.forms import ItemUpdateForm, DocumentUpdateForm, ItemCommentForm, ItemRawEditForm
-from requirements.tables import RequirementsTable
+from requirements.tables import RequirementsTable, ParentRequirementTable
 
 from doorstop import Tree, Item
 from doorstop.core import Document
@@ -105,6 +105,7 @@ class DocumentUpdateView(RequirementMixin, TemplateView):
         context = super().get_context_data(**kwargs)
         context['doc'] = self._doc
         context['form'] = self._form
+        context['parents'] = self._item.parent_items
         return context
 
     def form_valid(self):
@@ -177,6 +178,9 @@ class ItemUpdateView(RequirementMixin, TemplateView):
         context['doc'] = self._doc
         context['item'] = self._item if self._item else {'uid': '__NEW__'}
         context['form'] = self._form
+        parents = self._item.parent_items
+        if parents:
+            context['table'] = ParentRequirementTable(data=parents, item=self._item)
         return context
 
     def form_valid(self):
@@ -191,17 +195,20 @@ class ItemActionView(RequirementMixin, TemplateView):
     template_name = 'requirements/item_action.html'
 
     ACTION_REVIEW = 'review'
-    ACTION_NAMES = {'review': 'Review', 'disactivate': 'Mark inactive', 'delete': 'Delete'}
+    ACTION_NAMES = {'review': 'Review', 'disactivate': 'Mark inactive', 'delete': 'Delete', 'unlink': 'Unlink'}
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self._action = ''  # type: str
+        self._target = None  # type: Optional[Item]
         self._confirm = 0  # type: int
 
     def get(self, request, *args, **kwargs):
         self._doc = self._tree.find_document(kwargs['doc'])
         self._item = self._doc.find_item(kwargs['item'])
         self._action = kwargs['action']
+        if kwargs['target']:
+            self._target = self._tree.find_item(kwargs['target'])
         context = self.get_context_data()
         self._confirm = int(request.GET.get('confirm', '0'))
 
@@ -212,6 +219,9 @@ class ItemActionView(RequirementMixin, TemplateView):
             elif self._action == 'delete':
                 self._item.delete()
                 return HttpResponseRedirect(reverse('index-doc', args=[self._doc.prefix]))
+            elif self._action == 'unlink':
+                self._item.unlink(self._target.uid)
+                return HttpResponseRedirect(reverse('item-update', args=[self._doc.prefix, self._item.uid]))
 
         return self.render_to_response(context)
 
@@ -220,6 +230,6 @@ class ItemActionView(RequirementMixin, TemplateView):
         context['doc'] = self._doc
         context['item'] = self._item
         context['action'] = self._action
-        print(self._action)
+        context['target'] = self._target
         context['action_name'] = ItemActionView.ACTION_NAMES[self._action]
         return context

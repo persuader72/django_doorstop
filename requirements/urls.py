@@ -9,5 +9,6 @@ urlpatterns = [
     path('item/rawfile/<slug:doc>/<slug:item>', ItemRawFileView.as_view(), name='item-rawfile'),
     path('item/delete/<slug:doc>/<slug:item>', ItemDetailView.as_view(), name='item-delete'),
     path('item/review/<slug:doc>/<slug:item>/<slug:action>', ItemActionView.as_view(), name='item-action'),
+    path('item/review/<slug:doc>/<slug:item>/<slug:action>/<slug:target>', ItemActionView.as_view(), name='item-action-target'),
     path('item/update/<slug:doc>', DocumentUpdateView.as_view(), name='document-update'),
 ]

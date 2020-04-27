@@ -39,6 +39,30 @@
     </div>
 {% endif %}
 
+{% if action == 'unlink' %}
+    <div class="jumbotron">
+        <h1 class="display-4">Confirm unlink of parent!</h1>
+        <p class="lead">Yor are about the confirm the unlink of requirement {{ item.uid }} from its parent {{ target.uid }}.</p>
+        <hr>
+        <div class="row">
+            <div class="col-md-6">
+                <p><b>Child requirement {{ item.uid }}</b></p>
+                {{ item.text|linebreaksbr }}
+            </div>
+            <div class="col-md-6">
+                <p><b>Parent requirement {{ target.uid }}</b></p>
+                {{ target.text|linebreaksbr }}
+            </div>
+        </div>
+        <hr>
+        <p class="lead">
+            <a class="btn btn-primary btn-lg" href="{% url 'item-action-target' doc.prefix item.uid action target.uid %}?confirm=1" role="button">
+                Unlink requirement
+            </a>
+        </p>
+    </div>
+{% endif %}
+
     </div>
     <div class="col-md-1"></div>
 </div>

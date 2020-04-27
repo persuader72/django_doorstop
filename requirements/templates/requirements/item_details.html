@@ -18,7 +18,7 @@
         <p>Child documents</p>
         <ul>
         {% for item in childs %}
-        <li><a href="{% url 'item-update' item.document.prefix item.uid %}">{{ item.uid }}</a></li>
+        <li><a href="{% url 'item-details' item.document.prefix item.uid %}">{{ item.uid }}</a></li>
         {% endfor %}
         </ul>
         {% endif %}
@@ -26,7 +26,7 @@
         <p>Parent documents</p>
         <ul>
         {% for item in parents %}
-        <li><a href="{% url 'item-update' item.document.prefix item.uid %}">{{ item.uid }}</a></li>
+        <li><a href="{% url 'item-details' item.document.prefix item.uid %}">{{ item.uid }}</a></li>
         {% endfor %}
         </ul>
         {% endif %}
