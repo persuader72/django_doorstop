@@ -63,6 +63,48 @@
     </div>
 {% endif %}
 
+{% if error %}
+<div class="alert alert-danger" role="alert">{{ error }}</div>
+{% endif %}
+
+{% if action == 'link' %}
+    <div class="jumbotron">
+        <h1 class="display-4">Confirm link to parent!</h1>
+        <p class="lead">Yor are about the confirm the link of requirement {{ item.uid }} with parent {{ target.uid }}.</p>
+        <hr>
+        <div class="row">
+            <div class="col-md-6">
+                <p><b>Child requirement {{ item.uid }}</b></p>
+                {{ item.text|linebreaksbr }}
+            </div>
+            <div class="col-md-6">
+                {% if target %}
+                <p><b>Parent requirement {{ target.uid }}</b></p>
+                {{ target.text|linebreaksbr }}
+                {% else %}
+                <form method="get" action="{% url 'item-action' doc.prefix item.uid 'link' %}">
+                    <div class="form-group">
+                        <label for="parentUid">Parent UID</label>
+                        <input type="text" class="form-control" name="parentuid" id="parentUid" aria-describedby="parentUidHelp" placeholder="UID">
+                        <small id="parentUidHelp" class="form-text text-muted">Enter the requirement UID of parent item.</small>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Check link to parent</button>
+                </form>
+                {% endif %}
+            </div>
+        </div>
+        <hr>
+        <p class="lead">
+            {% if target %}
+            <a class="btn btn-primary btn-lg" href="{% url 'item-action-target' doc.prefix item.uid action target.uid %}?confirm=1" role="button">
+                Link requirement {{ item.uid }} to parent {{ target.uid }}
+            </a>
+            {% endif %}
+        </p>
+    </div>
+{% endif %}
+
+
     </div>
     <div class="col-md-1"></div>
 </div>

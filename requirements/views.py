@@ -10,7 +10,7 @@ from doorstop.core.validators.item_validator import ItemValidator
 from requirements.forms import ItemUpdateForm, DocumentUpdateForm, ItemCommentForm, ItemRawEditForm
 from requirements.tables import RequirementsTable, ParentRequirementTable
 
-from doorstop import Tree, Item
+from doorstop import Tree, Item, DoorstopError
 from doorstop.core import Document
 from doorstop.core.builder import build
 
@@ -36,6 +36,7 @@ class RequirementMixin(object):
 class IndexView(RequirementMixin, SingleTableMixin, ListView):
     template_name = 'requirements/index.html'
     table_class = RequirementsTable
+    paginate_by = 200
 
     def get(self, request, *args, **kwargs):
         self._doc = self._tree.find_document(kwargs['doc']) if 'doc' in kwargs else self._tree.document
@@ -195,22 +196,32 @@ class ItemActionView(RequirementMixin, TemplateView):
     template_name = 'requirements/item_action.html'
 
     ACTION_REVIEW = 'review'
-    ACTION_NAMES = {'review': 'Review', 'disactivate': 'Mark inactive', 'delete': 'Delete', 'unlink': 'Unlink'}
+    ACTION_NAMES = {'review': 'Review', 'disactivate': 'Mark inactive', 'delete': 'Delete',
+                    'unlink': 'Unlink', 'link': 'Link'}
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self._action = ''  # type: str
         self._target = None  # type: Optional[Item]
+        self._error = None  # type: Optional[str]
         self._confirm = 0  # type: int
 
     def get(self, request, *args, **kwargs):
         self._doc = self._tree.find_document(kwargs['doc'])
         self._item = self._doc.find_item(kwargs['item'])
         self._action = kwargs['action']
-        if kwargs['target']:
+        if 'target' in kwargs and kwargs['target']:
             self._target = self._tree.find_item(kwargs['target'])
-        context = self.get_context_data()
         self._confirm = int(request.GET.get('confirm', '0'))
+
+        if not self._confirm:
+            if self._action == 'link':
+                if 'parentuid' in request.GET:
+                    try:
+                        self._target = self._tree.find_item(request.GET.get('parentuid'))
+                    except DoorstopError as ex:
+                        self._error = str(ex)
+                        print(self._error)
 
         if self._confirm == 1:
             if self._action == 'review':
@@ -222,7 +233,11 @@ class ItemActionView(RequirementMixin, TemplateView):
             elif self._action == 'unlink':
                 self._item.unlink(self._target.uid)
                 return HttpResponseRedirect(reverse('item-update', args=[self._doc.prefix, self._item.uid]))
+            elif self._action == 'link':
+                self._tree.link_items(self._item.uid, self._target.uid)
+                return HttpResponseRedirect(reverse('item-update', args=[self._doc.prefix, self._item.uid]))
 
+        context = self.get_context_data()
         return self.render_to_response(context)
 
     def get_context_data(self, **kwargs):
@@ -231,5 +246,6 @@ class ItemActionView(RequirementMixin, TemplateView):
         context['item'] = self._item
         context['action'] = self._action
         context['target'] = self._target
+        context['error'] = self._error
         context['action_name'] = ItemActionView.ACTION_NAMES[self._action]
         return context
