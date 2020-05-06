@@ -1,5 +1,6 @@
 {% extends 'requirements/base.html' %}
 {% load crispy_forms_tags %}
+{% load forgein_field %}
 
 {% block page_title %}Requirments{% endblock %}
 {% block body_title %}Requirement item {{ item.uid }} of Document {{ doc.prefix }}{% endblock %}
@@ -37,7 +38,12 @@
         <p><em>Normative: {{ item.normative }} Reviewed: {{ item.reviewed }}</em></p>
         <hr>
         <p>{{ item.text|linebreaksbr }}</p>
-
+        <div class="row">
+        {% for forgein in doc.forgein_fields %}
+            <div class="col-md-2">{{ forgein }}: {{ item|forgein_field:forgein }}</div>
+        {% endfor %}
+        </div>
+        <hr>
         {% if issues %}
         <div class="alert alert-warning" role="alert">
             <ul>

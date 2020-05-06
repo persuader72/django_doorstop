@@ -106,7 +106,7 @@ class DocumentUpdateView(RequirementMixin, TemplateView):
         context = super().get_context_data(**kwargs)
         context['doc'] = self._doc
         context['form'] = self._form
-        context['parents'] = self._item.parent_items
+        context['parents'] = self._item.parent_items if hasattr(self._item, 'parent_items') else []
         return context
 
     def form_valid(self):
@@ -179,7 +179,7 @@ class ItemUpdateView(RequirementMixin, TemplateView):
         context['doc'] = self._doc
         context['item'] = self._item if self._item else {'uid': '__NEW__'}
         context['form'] = self._form
-        parents = self._item.parent_items
+        parents = self._item.parent_items if hasattr(self._item, 'parent_items') else []
         if parents:
             context['table'] = ParentRequirementTable(data=parents, item=self._item)
         return context
