@@ -22,7 +22,7 @@ class ParentRequirementTable(Table):
     @staticmethod
     def render_uid(value, record):
         # type: (str, Item) -> str
-        return format_html('<a href="{}">{}</a>', reverse('item-details', args=[record.document.prefix, record.uid.value]), value)
+        return format_html('<a id="{}" href="{}">{}</a>', record.uid, reverse('item-details', args=[record.document.prefix, record.uid.value]), value)
 
     def render_actions(self, record):
         # type: (Item) -> str
@@ -52,7 +52,7 @@ class RequirementsTable(Table):
     @staticmethod
     def render_uid(value, record):
         # type: (str, Item) -> str
-        return format_html('<a href="{}">{}</a>', reverse('item-details', args=[record.document.prefix, record.uid.value]), value)
+        return format_html('<a id="{}" href="{}">{}</a>', record.uid, reverse('item-details', args=[record.document.prefix, record.uid.value]), value)
 
     # noinspection PyUnusedLocal
     @staticmethod
