@@ -35,7 +35,9 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'django_tables2',
+    'markdownify',
     'crispy_forms',
+    'pagedown.apps.PagedownConfig',
     'requirements.apps.DoorstopConfig'
 ]
 
