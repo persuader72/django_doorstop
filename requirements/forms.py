@@ -42,7 +42,7 @@ class ItemCommentForm(forms.Form):
 
     def save(self, item):
         # type: (Item) -> None
-        comments = item.get('comments')
+        comments = item.get('comments', [])
         comments.insert(0, {'date': self.cleaned_data['date'], 'author': self.cleaned_data['author'], 'text': self.cleaned_data['text']})
         item.set('comments', comments)
         item.save()
