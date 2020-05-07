@@ -13,6 +13,7 @@
         <ul>
             <li><a href="{% url 'index-doc' doc.prefix %}">Return to list of {{ doc.prefix }}</a></li>
             <li><a href="{% url 'item-update' doc.prefix item.uid %}">Update req. of {{ item.uid }}</a></li>
+            {% if not item.reviewed %}<li><a href="{% url 'item-action' doc.prefix item.uid 'review' %}">Review requisite {{ item.uid }}</a>{% endif %}</li>
             <li><a href="{% url 'item-rawfile' doc.prefix item.uid %}">Edit raw file of {{ item.uid }}</a></li>
         </ul>
         {% if childs|length %}
