@@ -1,0 +1,3 @@
+[submodule "reqs"]
+	path = reqs
+	url = https://github.com/persuader72/django_doorstop_reqs.git
