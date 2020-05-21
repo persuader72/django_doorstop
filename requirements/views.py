@@ -1,8 +1,9 @@
 from typing import Optional
 
-from django.http import HttpResponseRedirect
+from django.http import HttpResponseRedirect, HttpResponse
 from django.urls import reverse
-from django.views.generic import ListView, TemplateView
+from django.views import View
+from django.views.generic import ListView, TemplateView, RedirectView
 from django.conf import settings
 from django_tables2 import SingleTableMixin
 
@@ -13,6 +14,64 @@ from requirements.tables import RequirementsTable, ParentRequirementTable
 from doorstop import Tree, Item, DoorstopError
 from doorstop.core import Document
 from doorstop.core.builder import build
+
+
+class DownloadView(View):
+    '''
+    Generic class view to abstract out the task of serving up files from within Django.
+    Recommended usage is to combine it with SingleObjectMixin and extend certain methods based on your particular use case.
+
+    Example usage::
+
+        class Snippet(models.Model):
+            name = models.CharField(max_length = 100)
+            slug = SlugField()
+            code = models.TextField()
+
+        from django.views.generic.detail import SingleObjectMixin
+
+        class DownloadSnippetView(SingleObjectMixin, DownloadView):
+            model = Snippet
+            use_xsendfile = False
+            mimetype = 'application/python'
+
+           def get_contents(self):
+                return self.get_object().code
+
+            def get_filename(self):
+                return self.get_object().slug + '.py'
+    '''
+
+    mimetype = None
+    extension = None
+    filename = None
+    use_xsendfile = True
+
+    def get_filename(self):
+        return self.filename
+
+    def get_extension(self):
+        return self.extension
+
+    def get_mimetype(self):
+        return self.mimetype
+
+    def get_location(self):
+        pass
+
+    def get_contents(self):
+        pass
+
+    def get(self, request, *args, **kwargs):
+        response = HttpResponse(mimetype=self.get_mimetype())
+        response['Content-Disposition'] = 'filename=' + self.get_filename()
+
+        if self.use_xsendfile is True:
+            response['X-Sendfile'] = self.get_location()
+        else:
+            response.write(self.get_contents())
+
+        return response
 
 
 class RequirementMixin(object):
@@ -115,6 +174,12 @@ class DocumentUpdateView(RequirementMixin, TemplateView):
 
     def form_invalid(self):
         return self.render_to_response(self.get_context_data(form=self._form))
+
+
+class DocumentExportView(RequirementMixin, RedirectView):
+    def get_redirect_url(self, *args, **kwargs):
+        self._doc = self._tree.find_document(kwargs['doc'])
+        print(self._doc.prefix)
 
 
 class ItemRawFileView(RequirementMixin, TemplateView):

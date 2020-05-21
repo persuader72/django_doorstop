@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import IndexView, ItemDetailView, ItemUpdateView, DocumentUpdateView, ItemActionView, ItemRawFileView
+from .views import IndexView, ItemDetailView, ItemUpdateView, DocumentUpdateView, ItemActionView, ItemRawFileView, DocumentExportView
 
 urlpatterns = [
     path('', IndexView.as_view(), name='index'),
@@ -11,4 +11,5 @@ urlpatterns = [
     path('item/review/<slug:doc>/<slug:item>/<slug:action>', ItemActionView.as_view(), name='item-action'),
     path('item/review/<slug:doc>/<slug:item>/<slug:action>/<slug:target>', ItemActionView.as_view(), name='item-action-target'),
     path('item/update/<slug:doc>', DocumentUpdateView.as_view(), name='document-update'),
+    path('item/export/<slug:doc>', DocumentExportView.as_view(), name='document-export'),
 ]
