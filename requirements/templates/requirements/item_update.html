@@ -12,9 +12,11 @@
         <p>Operations</p>
         <ul>
             <li><a href="{% url 'index-doc' doc.prefix %}#{{ item.uid }}">Return to list of {{ doc.prefix }}</a></li>
+            {% if item.uid != '__NEW__' %}
             <li><a href="{% url 'item-details' doc.prefix item.uid %}">Show req. {{ item.uid }}</a></li>
             <li><a href="{% url 'item-action' doc.prefix item.uid 'disactivate' %}">Mark as inactive</a></li>
             <li><a href="{% url 'item-action' doc.prefix item.uid 'link' %}">Link to parent req</a></li>
+            {% endif %}
         </ul>
         {% if table %}
         <p>Parent items</p>
