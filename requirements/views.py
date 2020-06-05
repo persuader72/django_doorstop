@@ -9,12 +9,13 @@ from django_tables2 import SingleTableMixin
 
 from doorstop.core.validators.item_validator import ItemValidator
 from requirements.forms import ItemUpdateForm, DocumentUpdateForm, ItemCommentForm, ItemRawEditForm
-from requirements.tables import RequirementsTable, ParentRequirementTable
+from requirements.tables import RequirementsTable, ParentRequirementTable, GitFileStatus, GitFileStatusRecord
 
 from doorstop import Tree, Item, DoorstopError
 from doorstop.core import Document
 from doorstop.core.builder import build
 
+from pygit2 import init_repository, GIT_STATUS_IGNORED
 
 class DownloadView(View):
     '''
@@ -90,6 +91,28 @@ class RequirementMixin(object):
                 doc = _doc
                 break
         return doc
+
+
+class VersionControlView(RequirementMixin, TemplateView):
+    template_name = 'requirements/version_control.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+
+        patch_text = ''
+        repo = init_repository(settings.DOORSTOP_REPO)
+        for patch in repo.diff():
+            patch_text += patch.text
+        context['patch'] = patch_text
+
+        table_data = []
+        status = repo.status()
+        for stat in status:
+            if status[stat] != GIT_STATUS_IGNORED:
+                table_data.append(GitFileStatusRecord(stat,status[stat]))
+        context['table'] = GitFileStatus(data=table_data)
+
+        return context
 
 
 class IndexView(RequirementMixin, SingleTableMixin, ListView):

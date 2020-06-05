@@ -1,9 +1,44 @@
 from django.utils.html import format_html, linebreaks
 from django.urls import reverse
 from django.utils.safestring import mark_safe
-from django_tables2 import Table, Column, BooleanColumn
+from django_tables2 import Table, Column, BooleanColumn, CheckBoxColumn
 
 from doorstop import Item
+
+from pygit2 import GIT_STATUS_WT_MODIFIED
+
+
+class GitFileStatusRecord(object):
+    def __init__(self, name, status):
+        self.selected = False
+        self.name = name
+        self.status = status
+
+    def status_text(self):
+        if self.status == GIT_STATUS_WT_MODIFIED:
+            return 'Modified'
+
+
+class GitFileStatus(Table):
+    selected = CheckBoxColumn()
+    name = Column(verbose_name='File name')
+    status_text = Column(verbose_name='Status')
+    actions = Column(empty_values=())
+
+    class Meta:
+        template_name = "django_tables2/bootstrap4.html"
+
+    def __init__(self, data=None):
+        super().__init__(data, attrs={'class': 'table table-sm'})
+
+    @staticmethod
+    def render_actions(record):
+        # type: (Item) -> str
+        html = format_html('<div class="btn-toolbar"><div class="btn-group">')
+        html += format_html('<a href="{}" class="btn btn-outline-primary btn-sm" title="Unlink parent req"><i class="fa fa-edit"></i></a>',
+                            reverse('index', args=[]))
+        html += format_html('</div></div>')
+        return html
 
 
 class ParentRequirementTable(Table):
@@ -47,6 +82,9 @@ class RequirementsTable(Table):
         template_name = "django_tables2/bootstrap4.html"
         row_attrs = {"style": lambda record: "" if record.active else "text-decoration: line-through"}
         order_by = 'level'
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs, extra_columns=[])
 
     # noinspection PyUnusedLocal
     @staticmethod

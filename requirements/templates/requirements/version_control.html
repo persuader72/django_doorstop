@@ -1,0 +1,40 @@
+{% extends 'requirements/base.html' %}
+{% load render_table from django_tables2 %}
+{% load pygmentify %}
+{% load static %}
+
+{% block page_title %}Requirements{% endblock %}
+{% block body_title %}Version Control{% endblock %}
+
+{% block head_extra %}
+<link rel="stylesheet" type="text/css" href="{% static 'django_pygments/css/pygments_default.css' %}" />
+<link rel="stylesheet" type="text/css" href="{% static 'django_pygments/css/demo.css' %}" />
+{% endblock %}
+
+{% block body_contents %}
+
+<div class="row">
+<div class="col-md-2">
+    <p>Operations</p>
+    <ul>
+        <li><a href="{% url 'index'%}">Document view</a></li>
+    </ul>
+</div>
+<div class="col-md-4">
+    <div class="card">
+        <div class="card-header">
+            Git file status
+        </div>
+        <div class="card-body">
+            {% render_table table %}
+        </div>
+    </div>
+</div>
+<div class="col-md-6">
+    {% pygment %}
+    <pre lang="diff">{{ patch|safe }}</pre>
+    {% endpygment %}
+</div>
+{% endblock %}
+</div>
+
