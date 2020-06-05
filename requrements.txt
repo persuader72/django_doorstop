@@ -4,5 +4,6 @@ django-tables2==2.3.1
 django-markdownify==0.8.0
 django-pagedown==2.0.3
 django-ace==1.0.7
+django-downloadview==2.1.1
 pyyaml==5.3.1
 pyficache==1.0.0

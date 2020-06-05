@@ -1,13 +1,16 @@
 from typing import Optional
 
-from django.http import HttpResponseRedirect, HttpResponse
+from django.core.files.base import File, ContentFile
+from django.http import HttpResponseRedirect
 from django.urls import reverse
-from django.views import View
-from django.views.generic import ListView, TemplateView, RedirectView
+from django.views.generic import ListView, TemplateView
 from django.conf import settings
+from django_downloadview import VirtualDownloadView
 from django_tables2 import SingleTableMixin
 
 from doorstop.core.validators.item_validator import ItemValidator
+
+from requirements.export import export_to_xlsx
 from requirements.forms import ItemUpdateForm, DocumentUpdateForm, ItemCommentForm, ItemRawEditForm
 from requirements.tables import RequirementsTable, ParentRequirementTable, GitFileStatus, GitFileStatusRecord
 
@@ -16,63 +19,6 @@ from doorstop.core import Document
 from doorstop.core.builder import build
 
 from pygit2 import init_repository, GIT_STATUS_IGNORED
-
-class DownloadView(View):
-    '''
-    Generic class view to abstract out the task of serving up files from within Django.
-    Recommended usage is to combine it with SingleObjectMixin and extend certain methods based on your particular use case.
-
-    Example usage::
-
-        class Snippet(models.Model):
-            name = models.CharField(max_length = 100)
-            slug = SlugField()
-            code = models.TextField()
-
-        from django.views.generic.detail import SingleObjectMixin
-
-        class DownloadSnippetView(SingleObjectMixin, DownloadView):
-            model = Snippet
-            use_xsendfile = False
-            mimetype = 'application/python'
-
-           def get_contents(self):
-                return self.get_object().code
-
-            def get_filename(self):
-                return self.get_object().slug + '.py'
-    '''
-
-    mimetype = None
-    extension = None
-    filename = None
-    use_xsendfile = True
-
-    def get_filename(self):
-        return self.filename
-
-    def get_extension(self):
-        return self.extension
-
-    def get_mimetype(self):
-        return self.mimetype
-
-    def get_location(self):
-        pass
-
-    def get_contents(self):
-        pass
-
-    def get(self, request, *args, **kwargs):
-        response = HttpResponse(mimetype=self.get_mimetype())
-        response['Content-Disposition'] = 'filename=' + self.get_filename()
-
-        if self.use_xsendfile is True:
-            response['X-Sendfile'] = self.get_location()
-        else:
-            response.write(self.get_contents())
-
-        return response
 
 
 class RequirementMixin(object):
@@ -109,7 +55,7 @@ class VersionControlView(RequirementMixin, TemplateView):
         status = repo.status()
         for stat in status:
             if status[stat] != GIT_STATUS_IGNORED:
-                table_data.append(GitFileStatusRecord(stat,status[stat]))
+                table_data.append(GitFileStatusRecord(stat, status[stat]))
         context['table'] = GitFileStatus(data=table_data)
 
         return context
@@ -199,10 +145,16 @@ class DocumentUpdateView(RequirementMixin, TemplateView):
         return self.render_to_response(self.get_context_data(form=self._form))
 
 
-class DocumentExportView(RequirementMixin, RedirectView):
-    def get_redirect_url(self, *args, **kwargs):
+class DocumentExportView(RequirementMixin, VirtualDownloadView):
+    def get(self, request, *args, **kwargs):
         self._doc = self._tree.find_document(kwargs['doc'])
         print(self._doc.prefix)
+        return super().get(request, *args, **kwargs)
+
+    def get_file(self):
+        path = export_to_xlsx(self._doc)
+        file = open(path, 'rb')
+        return File(file, name='exported.xlsx')
 
 
 class ItemRawFileView(RequirementMixin, TemplateView):
