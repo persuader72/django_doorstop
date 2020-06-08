@@ -1,4 +1,4 @@
-django==3.0.5
+django==3.0.7
 django-crispy-forms==1.9.0
 django-tables2==2.3.1
 django-markdownify==0.8.0
