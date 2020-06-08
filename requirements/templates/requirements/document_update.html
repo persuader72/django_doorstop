@@ -1,5 +1,6 @@
 {% extends 'requirements/base.html' %}
 {% load crispy_forms_tags %}
+{% load pygmentify %}
 
 {% block page_title %}Document {{ doc.prefix }}{% endblock %}
 {% block body_title %}Update Document {{ doc.prefix }}{% endblock %}
@@ -18,6 +19,67 @@
             {% csrf_token %}
             {% crispy form %}
         </form>
+        <hr>
+        <div class="row">
+            <div class="col-md-4">
+                <p>defaults field can be used to select the default foreign fields values for new items.
+                Note that multi choices field is defined as an array.</p>
+            </div>
+            <div class="col-md-4">
+            </div>
+            <div class="col-md-4">
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-md-4">
+                <div class="printcode">
+                    {% pygment %}
+                    <pre lang="yaml">
+defaults:
+  multi_field: []
+  string_field: ''
+  single_fields: SYS
+                    </pre>
+                    {% endpygment %}
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="printcode">
+                    {% pygment %}
+                    <pre lang="yaml">
+forgein-fields:
+  multi_field:
+    choices:
+      A: Choice A
+      B: Choice B
+      C: Choice C
+      D: Choice D
+    type: multi
+  string_field:
+    type: string
+  single_fields:
+    choices:
+      A: Choice A
+      B: Choice B
+      C: Choice C
+      D: Choice D
+    type: single
+                    </pre>
+                    {% endpygment %}
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="printcode">
+                    {% pygment %}
+                    <pre lang="yaml">
+reviewed:
+- multi_field
+- string_field
+                    </pre>
+                    {% endpygment %}
+                </div>
+            </div>
+        </div>
     </div>
     <div class="col-md-1"></div>
 </div>
