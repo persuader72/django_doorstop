@@ -7,11 +7,13 @@ register = template.Library()
 @register.filter
 def forgein_field(obj, attr):
     #  type: (Item, str) -> str
-    value = obj.get(attr)
-    print(value)
-    if value is None:
+    if not obj:
         return ''
-    elif isinstance(value, str):
-        return value
     else:
-        return ','.join(obj.get(attr))
+        value = obj.get(attr)
+        if value is None:
+            return ''
+        elif isinstance(value, str):
+            return value
+        else:
+            return ','.join(obj.get(attr))

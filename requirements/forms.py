@@ -118,7 +118,7 @@ class ItemUpdateForm(forms.Form):
     normative = forms.BooleanField(required=False)
 
     def init_foreign_string(self, name, field):
-        initial = self._item.get(name)
+        initial = self._item.get(name) if self._item else ''
         self.fields[name] = forms.CharField(initial=initial, required=False)
         self._forgein_fields.append((field['type'], name))
 
@@ -153,6 +153,7 @@ class ItemUpdateForm(forms.Form):
 
         for ff_name in ff:
             ff_item = ff[ff_name]
+            print(ff_name, ff_item['type'])
             if ff_item['type'] == 'multi':
                 self.init_foreign_multi_choice(ff_name, ff_item)
             elif ff_item['type'] == 'single':
@@ -208,7 +209,7 @@ class ItemUpdateForm(forms.Form):
         self._item.normative = self.cleaned_data['normative']
 
         for _type, name in self._forgein_fields:
-            if _type == 'multi':
+            if _type == 'multi' or _type == 'string' or _type == 'single':
                 self._item.set(name, self.cleaned_data[name])
             elif _type == 'flat':
                 self._item.set(name, self.cleaned_data[name].split(','))
