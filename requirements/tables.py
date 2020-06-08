@@ -73,14 +73,16 @@ class RequirementsTable(Table):
     header = Column()
     text = Column()
     level = Column()
-    active = BooleanColumn(verbose_name='A.', orderable=False)
+    # active = BooleanColumn(verbose_name='A.', orderable=False)
     reviewed = BooleanColumn(verbose_name='R.', orderable=False)
     normative = BooleanColumn(verbose_name='N.', orderable=False)
     actions = Column(empty_values=())
 
     class Meta:
         template_name = "django_tables2/bootstrap4.html"
-        row_attrs = {"style": lambda record: "" if record.active else "text-decoration: line-through"}
+        row_attrs = {
+            "data-heading": lambda record: record.heading
+        }
         order_by = 'level'
 
     def __init__(self, **kwargs):
