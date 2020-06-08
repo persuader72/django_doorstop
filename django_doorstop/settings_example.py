@@ -124,4 +124,5 @@ STATIC_ROOT = os.path.join(PROJECT_ROOT, 'static')
 
 CRISPY_TEMPLATE_PACK = 'bootstrap4'
 # Change me....
+DOORSTOP_ITEMS_PAGINATE = 20
 DOORSTOP_REPO = '/tmp/repo'

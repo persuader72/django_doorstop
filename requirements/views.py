@@ -64,7 +64,7 @@ class VersionControlView(RequirementMixin, TemplateView):
 class IndexView(RequirementMixin, SingleTableMixin, ListView):
     template_name = 'requirements/index.html'
     table_class = RequirementsTable
-    paginate_by = 200
+    paginate_by = settings.DOORSTOP_ITEMS_PAGINATE
 
     def get(self, request, *args, **kwargs):
         self._doc = self._tree.find_document(kwargs['doc']) if 'doc' in kwargs else self._tree.document
