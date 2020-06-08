@@ -41,7 +41,7 @@
         <p>{{ item.text|linebreaksbr }}</p>
         <div class="row">
         {% for forgein in doc.forgein_fields %}
-            <div class="col-md-2">{{ forgein }}: {{ item|forgein_field:forgein }}</div>
+            <div class="col-md-2">{{ forgein }}: {{ item|foreign_field:forgein }}</div>
         {% endfor %}
         </div>
         <hr>

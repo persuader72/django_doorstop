@@ -1,11 +1,11 @@
 from django import template
-from doorstop import Item
+# from doorstop import Item
 
 register = template.Library()
 
 
 @register.filter
-def forgein_field(obj, attr):
+def foreign_field(obj, attr):
     #  type: (Item, str) -> str
     if not obj:
         return ''
