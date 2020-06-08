@@ -20,6 +20,7 @@ from doorstop.core.builder import build
 
 from pygit2 import init_repository, GIT_STATUS_IGNORED
 
+from pygit2 import init_repository, Repository
 
 class RequirementMixin(object):
     def __init__(self):
@@ -68,6 +69,10 @@ class IndexView(RequirementMixin, SingleTableMixin, ListView):
 
     def get(self, request, *args, **kwargs):
         self._doc = self._tree.find_document(kwargs['doc']) if 'doc' in kwargs else self._tree.document
+        repo = init_repository('.')
+        print(repo.diff())
+        for patch in repo.diff():
+            print(patch.text)
         return super().get(request, *args, **kwargs)
 
     def get_context_data(self, **kwargs):

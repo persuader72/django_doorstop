@@ -4,7 +4,7 @@ Django_doorstop is a simple web interface for doorstop python library for
 requirement managment.
 
 Use this customized version  of [DoorStop](https://github.com/persuader72/doorstop)
-to enable the forgein fileds in requirements.
+to enable the foreign fileds in requirements.
 
 Install django app
 
@@ -31,3 +31,13 @@ Run server
 ```bash
 python manage.py 8000
 ```
+
+# Screenshots
+
+## Document Items List page
+
+![Doc Items Table](docs/doc_items_table.png)
+
+## Item update page
+
+![Doc Items Table](docs/item_update.png)
