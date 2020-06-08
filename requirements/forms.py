@@ -120,13 +120,13 @@ class ItemUpdateForm(forms.Form):
     def init_foreign_string(self, name, field):
         initial = self._item.get(name) if self._item else ''
         self.fields[name] = forms.CharField(initial=initial, required=False)
-        self._forgein_fields.append((field['type'], name))
+        self._foreign_fields.append((field['type'], name))
 
     def init_foreign_flat_array(self, name, field):
         sep = field['sep'] if 'sep' in field else ';'
         initial = sep.join(self._item.get(name)) if self._item else None
         self.fields[name] = forms.CharField(initial=initial, required=False)
-        self._forgein_fields.append((field['type'], name))
+        self._foreign_fields.append((field['type'], name))
 
     def init_foreign_multi_choice(self, name, field):
         vv = []
@@ -135,7 +135,7 @@ class ItemUpdateForm(forms.Form):
                 vv.append((k, field['choices'][k],))
         initial = self._item.get(name) if self._item else None
         self.fields[name] = forms.MultipleChoiceField(choices=tuple(sorted(vv)), initial=initial, required=False)
-        self._forgein_fields.append((field['type'], name))
+        self._foreign_fields.append((field['type'], name))
 
     def init_foreign_single_choice(self, name, field):
         vv = []
@@ -144,7 +144,7 @@ class ItemUpdateForm(forms.Form):
                 vv.append((k, field['choices'][k],))
         initial = self._item.get(name) if self._item else None
         self.fields[name] = forms.ChoiceField(choices=tuple(sorted(vv)), initial=initial, required=False)
-        self._forgein_fields.append((field['type'], name))
+        self._foreign_fields.append((field['type'], name))
 
     def init_foreign_fields(self):
         ff = self._doc.forgein_fields
@@ -163,8 +163,8 @@ class ItemUpdateForm(forms.Form):
             elif ff_item['type'] == 'string':
                 self.init_foreign_string(ff_name, ff_item)
         vv = []
-        if len(self._forgein_fields) > 0:
-            for ff_type, ff_name in self._forgein_fields:
+        if len(self._foreign_fields) > 0:
+            for ff_type, ff_name in self._foreign_fields:
                 vv.append(Column(ff_name, css_class='form-group col-md-6 mb-0'))
 
         return tuple(vv)
@@ -175,7 +175,7 @@ class ItemUpdateForm(forms.Form):
         self._doc = doc  # type: Optional[Document]
         if self._doc is None and self._item is not None:
             self._doc = self._item.document
-        self._forgein_fields = []  # type: List[tuple]
+        self._foreign_fields = []  # type: List[tuple]
 
         initial_data = None
         if item is not None and data is None:
@@ -208,7 +208,7 @@ class ItemUpdateForm(forms.Form):
         self._item.text = self.cleaned_data['text']
         self._item.normative = self.cleaned_data['normative']
 
-        for _type, name in self._forgein_fields:
+        for _type, name in self._foreign_fields:
             if _type == 'multi' or _type == 'string' or _type == 'single':
                 self._item.set(name, self.cleaned_data[name])
             elif _type == 'flat':
