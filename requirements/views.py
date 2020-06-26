@@ -7,6 +7,7 @@ from django.views.generic import ListView, TemplateView
 from django.conf import settings
 from django_downloadview import VirtualDownloadView
 from django_tables2 import SingleTableMixin
+from jsonview.views import JsonView
 
 from doorstop.core.validators.item_validator import ItemValidator
 
@@ -242,7 +243,7 @@ class ItemActionView(RequirementMixin, TemplateView):
 
     ACTION_REVIEW = 'review'
     ACTION_NAMES = {'review': 'Review', 'disactivate': 'Mark inactive', 'delete': 'Delete',
-                    'unlink': 'Unlink', 'link': 'Link'}
+                    'unlink': 'Unlink', 'link': 'Link', 'restore': 'Restore'}
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -273,8 +274,14 @@ class ItemActionView(RequirementMixin, TemplateView):
                 self._item.review()
                 return HttpResponseRedirect(reverse('item-update', args=[self._doc.prefix, self._item.uid]))
             elif self._action == 'delete':
-                self._item.delete()
-                return HttpResponseRedirect(reverse('index-doc', args=[self._doc.prefix]))
+                if self._item.deleted:
+                    self._item.delete()
+                else:
+                    self._item.deleted = True
+                return HttpResponseRedirect("%s#%s" % (reverse('index-doc', args=[self._doc.prefix]), self._item.uid))
+            elif self._action == 'restore':
+                self._item.deleted = False
+                return HttpResponseRedirect("%s#%s" % (reverse('index-doc', args=[self._doc.prefix]), self._item.uid))
             elif self._action == 'unlink':
                 self._item.unlink(self._target.uid)
                 return HttpResponseRedirect(reverse('item-update', args=[self._doc.prefix, self._item.uid]))
@@ -294,3 +301,61 @@ class ItemActionView(RequirementMixin, TemplateView):
         context['error'] = self._error
         context['action_name'] = ItemActionView.ACTION_NAMES[self._action]
         return context
+
+
+class FullGraphView(RequirementMixin, TemplateView):
+    template_name = 'requirements/full_graph.html'
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self._form = None  # type: Optional[ItemUpdateForm]
+
+    def get(self, request, *args, **kwargs):
+        context = self.get_context_data()
+        return self.render_to_response(context)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['doc'] = self._doc
+        context['item'] = self._item if self._item else {'uid': '__NEW__'}
+        context['form'] = self._form
+        parents = self._item.parent_items if hasattr(self._item, 'parent_items') else []
+        if parents:
+            context['table'] = ParentRequirementTable(data=parents, item=self._item)
+        return context
+
+
+class GrpahDataView(RequirementMixin, JsonView):
+    def _index_of_item(self, look):
+        index = 0
+        for item in self._doc:
+            if item.uid == look.uid:
+                return index
+            index += 1
+        return -1
+
+    def get_context_data(self, **kwargs):
+        self._doc = self._tree.find_document(kwargs['doc'])
+        context = super().get_context_data(**kwargs)
+
+        nodes = []
+        nodes.append({"name": "ANDROS", "width": 60, "height": 40, "group": 0})
+        for item in self._doc:
+            nodes.append({"name": str(item.uid), "width": 60, "height": 40, "group": 1})
+        context['nodes'] = nodes
+
+        index = 1
+        links = []
+        for item in self._doc:
+            parents = item.parent_items
+            if not parents:
+                links.append({'source': 0, 'target': index})
+            else:
+                for parent in parents:
+                    links.append({'source': self._index_of_item(parent), 'target': index})
+
+            index += 1
+        context['links'] = links
+
+        return context
+

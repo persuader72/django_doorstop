@@ -81,7 +81,9 @@ class RequirementsTable(Table):
     class Meta:
         template_name = "django_tables2/bootstrap4.html"
         row_attrs = {
-            "data-heading": lambda record: record.heading
+            "data-heading": lambda record: record.heading,
+            "style": lambda record: "" if not record.deleted else "text-decoration: line-through"
+
         }
         order_by = 'level'
 
@@ -92,7 +94,10 @@ class RequirementsTable(Table):
     @staticmethod
     def render_uid(value, record):
         # type: (str, Item) -> str
-        return format_html('<a id="{}" href="{}">{}</a>', record.uid, reverse('item-details', args=[record.document.prefix, record.uid.value]), value)
+        if record.deleted:
+            return record.uid
+        else:
+            return format_html('<a id="{}" href="{}">{}</a>', record.uid, reverse('item-details', args=[record.document.prefix, record.uid.value]), value)
 
     # noinspection PyUnusedLocal
     @staticmethod
@@ -116,10 +121,14 @@ class RequirementsTable(Table):
     def render_actions(record):
         # type: (Item) -> str
         html = format_html('<div class="btn-toolbar"><div class="btn-group">')
-        html += format_html('<a href="{}" class="btn btn-outline-primary btn-sm" title="Edit item"><i class="fa fa-edit"></i></a>',
-                            reverse('item-update', args=[record.document.prefix, record.uid.value]))
-        html += format_html('<a href="{}" class="btn btn-outline-primary btn-sm" title="View item"><i class="fa fa-eye"></i></a>',
-                            reverse('item-details', args=[record.document.prefix, record.uid.value]))
+        if not record.deleted:
+            html += format_html('<a href="{}" class="btn btn-outline-primary btn-sm" title="Edit item"><i class="fa fa-edit"></i></a>',
+                                reverse('item-update', args=[record.document.prefix, record.uid.value]))
+            html += format_html('<a href="{}" class="btn btn-outline-primary btn-sm" title="View item"><i class="fa fa-eye"></i></a>',
+                                reverse('item-details', args=[record.document.prefix, record.uid.value]))
+        else:
+            html += format_html('<a href="{}" class="btn btn-outline-primary btn-sm" title="Restore item"><i class="fa fa-arrow-circle-o-up"></i></a>',
+                                reverse('item-action', args=[record.document.prefix, record.uid.value, 'restore']))
         html += format_html('<a href="{}" class="btn btn-outline-primary btn-sm" title="Delete item"><i class="fa fa-trash"></i></a>',
                             reverse('item-action', args=[record.document.prefix, record.uid.value, 'delete']))
         html += format_html('</div></div>')

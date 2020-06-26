@@ -29,12 +29,24 @@
 
 {% if action == 'delete' %}
     <div class="jumbotron">
-        <h1 class="display-4">Confirm delete!</h1>
-        <p class="lead">Yor are about the confirm the deletion of requirement {{ item.uid }}.</p>
+        <h1 class="display-4">{% if item.deleted %}Confirm item deletion{% else %}Move item to trash{% endif %}!</h1>
+        <p class="lead">Yor are about to {% if item.deleted %}confirm the deletion{% else %}move to trash{% endif %} of requirement {{ item.uid }}.</p>
         <hr class="my-4">
         <p>{{ item.text|linebreaksbr }}</p>
         <p class="lead">
-            <a class="btn btn-primary btn-lg" href="{% url 'item-action' doc.prefix item.uid action %}?confirm=1" role="button">Delete requirement</a>
+            <a class="btn btn-primary btn-lg" href="{% url 'item-action' doc.prefix item.uid action %}?confirm=1" role="button">Remove requirement</a>
+        </p>
+    </div>
+{% endif %}
+
+{% if action == 'restore' %}
+    <div class="jumbotron">
+        <h1 class="display-4">Confirm restore deleted item!</h1>
+        <p class="lead">Yor are about to restore the deleted requirement {{ item.uid }}.</p>
+        <hr class="my-4">
+        <p>{{ item.text|linebreaksbr }}</p>
+        <p class="lead">
+            <a class="btn btn-primary btn-lg" href="{% url 'item-action' doc.prefix item.uid action %}?confirm=1" role="button">Restore requirement</a>
         </p>
     </div>
 {% endif %}
