@@ -1,6 +1,6 @@
 from typing import Optional
 
-from django.core.files.base import File, ContentFile
+from django.core.files.base import File
 from django.http import HttpResponseRedirect
 from django.urls import reverse
 from django.views.generic import ListView, TemplateView
@@ -18,8 +18,6 @@ from requirements.tables import RequirementsTable, ParentRequirementTable, GitFi
 from doorstop import Tree, Item, DoorstopError
 from doorstop.core import Document
 from doorstop.core.builder import build
-
-from pygit2 import init_repository, GIT_STATUS_IGNORED
 
 from pygit2 import init_repository, Repository
 

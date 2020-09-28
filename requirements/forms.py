@@ -116,6 +116,7 @@ class ItemUpdateForm(forms.Form):
     text = forms.CharField(widget=forms.Textarea())
     active = forms.BooleanField(required=False)
     normative = forms.BooleanField(required=False)
+    pending = forms.BooleanField(required=False)
 
     def init_foreign_string(self, name, field):
         initial = self._item.get(name) if self._item else ''
@@ -179,7 +180,8 @@ class ItemUpdateForm(forms.Form):
 
         initial_data = None
         if item is not None and data is None:
-            initial_data = {'uid': item.uid, 'level': item.level, 'header': item.header, 'text': item.text, 'normative': item.normative}
+            initial_data = {'uid': item.uid, 'level': item.level, 'header': item.header, 'text': item.text, 'normative': item.normative,
+                            'pending': item.pending}
 
         super().__init__(data=data, initial=initial_data)
         layout = self.init_foreign_fields()
@@ -190,7 +192,7 @@ class ItemUpdateForm(forms.Form):
                 Column('uid', css_class='form-group col-md-3 mb-0'),
                 Column('header', css_class='form-group col-md-4 mb-0'),
                 Column('level', css_class='form-group col-md-3 mb-0'),
-                Column('normative', css_class='form-group col-md-2 mb-0'),
+                Column(Row('normative'), Row('pending'), css_class='form-group col-md-2 mb-0'),
                 css_class='form-row'
             ),
             'text',
@@ -207,6 +209,7 @@ class ItemUpdateForm(forms.Form):
         self._item.header = self.cleaned_data['header']
         self._item.text = self.cleaned_data['text']
         self._item.normative = self.cleaned_data['normative']
+        self._item.pending = self.cleaned_data['pending']
 
         for _type, name in self._foreign_fields:
             if _type == 'multi' or _type == 'string' or _type == 'single':

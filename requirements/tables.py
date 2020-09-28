@@ -67,6 +67,16 @@ class ParentRequirementTable(Table):
         html += format_html('</div></div>')
         return html
 
+def row_style(record):
+    #  type: (Item) -> str
+    style = ''
+    if record.deleted:
+        style += 'text-decoration: line-through; '
+    if record.pending:
+        style += 'background-color: #d7ffd3;'
+    elif not record.reviewed:
+        style += 'background-color: #fffbd3;'
+    return style
 
 class RequirementsTable(Table):
     uid = Column()
@@ -82,7 +92,7 @@ class RequirementsTable(Table):
         template_name = "django_tables2/bootstrap4.html"
         row_attrs = {
             "data-heading": lambda record: record.heading,
-            "style": lambda record: "" if not record.deleted else "text-decoration: line-through"
+            "style": lambda record: row_style(record)
 
         }
         order_by = 'level'
