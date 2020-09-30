@@ -5,3 +5,4 @@ __pycache__
 venv
 
 django_doorstop/settings.py
+requirements/management/commands/*.py
