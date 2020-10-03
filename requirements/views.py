@@ -1,6 +1,7 @@
-from typing import Optional
+from typing import Optional, List
 
 from django.core.files.base import File
+from django.core.files.uploadedfile import UploadedFile
 from django.http import HttpResponseRedirect
 from django.urls import reverse
 from django.views.generic import ListView, TemplateView
@@ -11,7 +12,7 @@ from jsonview.views import JsonView
 
 from doorstop.core.validators.item_validator import ItemValidator
 
-from requirements.export import export_to_xlsx
+from requirements.export import export_to_xlsx, import_from_xslx
 from requirements.forms import ItemUpdateForm, DocumentUpdateForm, ItemCommentForm, ItemRawEditForm
 from requirements.tables import RequirementsTable, ParentRequirementTable, GitFileStatus, GitFileStatusRecord
 
@@ -21,11 +22,24 @@ from doorstop.core.builder import build
 
 from pygit2 import init_repository, Repository
 
+
 class RequirementMixin(object):
     def __init__(self):
         self._tree = build(root=settings.DOORSTOP_REPO)  # type: Tree
         self._doc = None  # type: Optional[Document]
         self._item = None  # type: Optional[Item]
+        self._form = None
+
+    @staticmethod
+    def find_child_docs(tree, doc):
+        #  type: (Tree, Document) -> List[Document]
+        childs = []
+        for _d in tree.documents:  # type: Document
+            if _d.prefix == doc.prefix:
+                continue
+            if _d.parent == doc.prefix:
+                childs.append(_d)
+        return childs
 
     @staticmethod
     def get_doc(prefix):
@@ -68,10 +82,10 @@ class IndexView(RequirementMixin, SingleTableMixin, ListView):
 
     def get(self, request, *args, **kwargs):
         self._doc = self._tree.find_document(kwargs['doc']) if 'doc' in kwargs else self._tree.document
-        repo = init_repository('.')
-        print(repo.diff())
-        for patch in repo.diff():
-            print(patch.text)
+        #repo = init_repository('.')
+        #print(repo.diff())
+        #for patch in repo.diff():
+        #    print(patch.text)
         return super().get(request, *args, **kwargs)
 
     def get_context_data(self, **kwargs):
@@ -90,21 +104,22 @@ class ItemDetailView(RequirementMixin, TemplateView):
     def get(self, request, *args, **kwargs):
         self._doc = self._tree.find_document(kwargs['doc'])
         self._item = self._doc.find_item(kwargs['item'])
-        self._fprm = ItemCommentForm()
+        self._form = ItemCommentForm()
         return super().get(request, *args, **kwargs)
 
     def post(self, request, *args, **kwargs):
         self._doc = self._tree.find_document(kwargs['doc'])
         self._item = self._doc.find_item(kwargs['item'])
-        self._fprm = ItemCommentForm(request.POST)
-        if self._fprm.is_valid():
-            self._fprm.save(self._item)
-            self._fprm = ItemCommentForm()
+        self._form = ItemCommentForm(request.POST)
+        if self._form.is_valid():
+            self._form.save(self._item)
+            self._form = ItemCommentForm()
         return super().get(request, *args, **kwargs)
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['doc'] = self._doc
+        context['child_docs'] = self.find_child_docs(self._tree, self._doc)
         context['item'] = self._item
         context['childs'] = self._item.find_child_items()
         context['parents'] = self._item.parent_items
@@ -112,7 +127,7 @@ class ItemDetailView(RequirementMixin, TemplateView):
         issues = validator.get_issues(self._item)
         context['issues'] = [str(x) for x in issues]
         context['comments'] = self._item.get('comments')
-        context['form'] = self._fprm
+        context['form'] = self._form
         return context
 
 
@@ -159,6 +174,49 @@ class DocumentExportView(RequirementMixin, VirtualDownloadView):
         path = export_to_xlsx(self._doc)
         file = open(path, 'rb')
         return File(file, name='exported.xlsx')
+
+
+class DocumentActionView(RequirementMixin, TemplateView):
+    template_name = 'requirements/document_action.html'
+
+    ACTION_NAMES = {'import': 'Import'}
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self._action = ''  # type: str
+        self._error = None  # type: Optional[str]
+        self._confirm = 0  # type: int
+
+    def get(self, request, *args, **kwargs):
+        self._doc = self._tree.find_document(kwargs['doc'])
+        self._action = kwargs['action']
+        self._confirm = int(request.GET.get('confirm', '0'))
+
+        context = self.get_context_data()
+        return self.render_to_response(context)
+
+    def post(self, request, *args, **kwargs):
+        self._doc = self._tree.find_document(kwargs['doc'])
+        self._action = kwargs['action']
+        self._confirm = int(request.POST.get('confirm', '0'))
+
+        if self._confirm == 1:
+            if self._action == 'import':
+                file = request.FILES['file_to_import']  # type: UploadedFile
+                with open('/tmp/import.xlsx', 'wb') as f:
+                    f.write(file.read())
+                import_from_xslx(self._doc)
+                print(file.name, file.size, file.content_type)
+                return HttpResponseRedirect(reverse('index-doc', args=[self._doc.prefix]))
+
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['doc'] = self._doc
+        context['action'] = self._action
+        context['error'] = self._error
+        context['action_name'] = ItemActionView.ACTION_NAMES[self._action]
+        return context
 
 
 class ItemRawFileView(RequirementMixin, TemplateView):
@@ -241,7 +299,7 @@ class ItemActionView(RequirementMixin, TemplateView):
 
     ACTION_REVIEW = 'review'
     ACTION_NAMES = {'review': 'Review', 'disactivate': 'Mark inactive', 'delete': 'Delete',
-                    'unlink': 'Unlink', 'link': 'Link', 'restore': 'Restore'}
+                    'unlink': 'Unlink', 'link': 'Link', 'restore': 'Restore', 'import': 'Import'}
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)

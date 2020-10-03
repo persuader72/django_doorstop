@@ -1,0 +1,40 @@
+{% extends 'requirements/base.html' %}
+{% load crispy_forms_tags %}
+
+{% block page_title %}Requirments{% endblock %}
+{% block body_title %}{{ action_name }} Document {{ doc.prefix }}{% endblock %}
+{% block head_extra %}{{ form.media }}{% endblock %}
+
+{% block body_contents %}
+<div class="row">
+    <div class="col-md-3">
+        <p>Operations</p>
+        <ul>
+            <li><a href="{% url 'index-doc' doc.prefix %}">Return to list of {{ doc.prefix }}</a></li>
+        </ul>
+    </div>
+    <div class="col-md-8">
+{% if action == 'import' %}
+    <div class="jumbotron">
+        <h1 class="display-4">Import requirements</h1>
+        <p class="lead">In {{ doc.prefix }}.</p>
+        <hr class="my-4">
+        <p class="lead">
+            <form method="post" enctype="multipart/form-data" action="{% url 'document-action' doc.prefix action %}">
+                {% csrf_token %}
+                <input type="hidden" name="confirm" value="1">
+                <div class="form-group">
+                    <label for="parentUid">File to import</label>
+                    <input type="file" class="form-control" name="file_to_import" id="fileToImport" aria-describedby="fileToImportHelp" placeholder="UID">
+                    <small id="fileToImportHelp" class="form-text text-muted">Select the file to upload.</small>
+                </div>
+                <button type="submit" class="btn btn-primary">Import file</button>
+            </form>
+        </p>
+    </div>
+{% endif %}
+
+    </div>
+    <div class="col-md-1"></div>
+</div>
+{% endblock %}

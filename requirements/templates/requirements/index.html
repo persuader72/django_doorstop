@@ -17,6 +17,7 @@ tr[data-heading='True'] {
     <ul>
         <li><a href="{% url 'item-update' doc.prefix '__NEW__' %}">Create new req in {{ doc.prefix }}</a></li>
         <li><a href="{% url 'document-export' doc.prefix %}">Export req. to xslx</a></li>
+        <li><a href="{% url 'document-action' doc.prefix 'import' %}">Import req. from xslx</a></li>
         <li><a href="{% url 'version_control' %}">Version control view</a></li>
     </ul>
     Other documents

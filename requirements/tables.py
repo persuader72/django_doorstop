@@ -4,7 +4,6 @@ from django.utils.safestring import mark_safe
 from django_tables2 import Table, Column, BooleanColumn, CheckBoxColumn
 
 from doorstop import Item
-
 from pygit2 import GIT_STATUS_WT_MODIFIED
 
 
@@ -32,7 +31,7 @@ class GitFileStatus(Table):
         super().__init__(data, attrs={'class': 'table table-sm'})
 
     @staticmethod
-    def render_actions(record):
+    def render_actions(_record):
         # type: (Item) -> str
         html = format_html('<div class="btn-toolbar"><div class="btn-group">')
         html += format_html('<a href="{}" class="btn btn-outline-primary btn-sm" title="Unlink parent req"><i class="fa fa-edit"></i></a>',
@@ -67,6 +66,7 @@ class ParentRequirementTable(Table):
         html += format_html('</div></div>')
         return html
 
+
 def row_style(record):
     #  type: (Item) -> str
     style = ''
@@ -77,6 +77,7 @@ def row_style(record):
     elif not record.reviewed:
         style += 'background-color: #fffbd3;'
     return style
+
 
 class RequirementsTable(Table):
     uid = Column()
@@ -100,32 +101,19 @@ class RequirementsTable(Table):
     def __init__(self, **kwargs):
         super().__init__(**kwargs, extra_columns=[])
 
-    # noinspection PyUnusedLocal
     @staticmethod
     def render_uid(value, record):
         # type: (str, Item) -> str
         if record.deleted:
             return record.uid
         else:
-            return format_html('<a id="{}" href="{}">{}</a>', record.uid, reverse('item-details', args=[record.document.prefix, record.uid.value]), value)
+            return format_html('<a id="{}" href="{}">{}</a>', record.uid, reverse('item-details', args=[record.document.prefix,
+                                                                                                        record.uid.value]), value)
 
-    # noinspection PyUnusedLocal
     @staticmethod
-    def render_text(value, record):
+    def render_text(    value, record):
         # type: (str, Item) -> str
         return mark_safe(linebreaks(record.text))
-
-    # noinspection PyUnusedLocal
-    @staticmethod
-    def render_moc(value, record):
-        # type: (str, Item) -> str
-        return record.moc_label_list(sep=' ')
-
-    # noinspection PyUnusedLocal
-    @staticmethod
-    def render_system(value, record):
-        # type: (str, Item) -> str
-        return record.system_list(sep=' ')
 
     @staticmethod
     def render_actions(record):
@@ -137,8 +125,9 @@ class RequirementsTable(Table):
             html += format_html('<a href="{}" class="btn btn-outline-primary btn-sm" title="View item"><i class="fa fa-eye"></i></a>',
                                 reverse('item-details', args=[record.document.prefix, record.uid.value]))
         else:
-            html += format_html('<a href="{}" class="btn btn-outline-primary btn-sm" title="Restore item"><i class="fa fa-arrow-circle-o-up"></i></a>',
-                                reverse('item-action', args=[record.document.prefix, record.uid.value, 'restore']))
+            html += format_html(
+                '<a href="{}" class="btn btn-outline-primary btn-sm" title="Restore item"><i class="fa fa-arrow-circle-o-up"></i></a>',
+                reverse('item-action', args=[record.document.prefix, record.uid.value, 'restore']))
         html += format_html('<a href="{}" class="btn btn-outline-primary btn-sm" title="Delete item"><i class="fa fa-trash"></i></a>',
                             reverse('item-action', args=[record.document.prefix, record.uid.value, 'delete']))
         html += format_html('</div></div>')
