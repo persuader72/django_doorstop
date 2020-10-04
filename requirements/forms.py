@@ -15,6 +15,22 @@ from doorstop.core import Item
 from doorstop.common import load_yaml
 
 
+class VirtualItem(object):
+    def __init__(self, item=None, fields=None):
+        self.uid = '__NEW__'
+        self.level = ''
+        self.header = item.header if item else ''
+        self.text = item.text if item else ''
+        self.normative = item.normative if item else ''
+        self.pending = item.pending if item else ''
+        self._data = {}
+
+        for f in fields:
+            self._data[f] = item.get(f)
+
+    def get(self, field):
+        return self._data.get(field, None)
+
 class ItemCommentForm(forms.Form):
     date = forms.DateTimeField(required=True, input_formats=['%Y-%m-%d %H:%M', '%Y-%m-%d %H:%M:%S'])
     author = forms.CharField(max_length=255, required=True)

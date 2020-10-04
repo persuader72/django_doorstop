@@ -9,6 +9,7 @@ urlpatterns = [
     path('graph/data/<slug:doc>', GrpahDataView.as_view(), name='graph-data'),
     path('item/details/<slug:doc>/<slug:item>', ItemDetailView.as_view(), name='item-details'),
     path('item/update/<slug:doc>/<slug:item>', ItemUpdateView.as_view(), name='item-update'),
+    path('item/update/<slug:doc>/<slug:item>/<slug:from>', ItemUpdateView.as_view(), name='item-update-from'),
     path('item/rawfile/<slug:doc>/<slug:item>', ItemRawFileView.as_view(), name='item-rawfile'),
     path('item/delete/<slug:doc>/<slug:item>', ItemDetailView.as_view(), name='item-delete'),
     path('item/review/<slug:doc>/<slug:item>/<slug:action>', ItemActionView.as_view(), name='item-action'),

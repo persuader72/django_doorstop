@@ -13,7 +13,7 @@ from jsonview.views import JsonView
 from doorstop.core.validators.item_validator import ItemValidator
 
 from requirements.export import export_to_xlsx, import_from_xslx
-from requirements.forms import ItemUpdateForm, DocumentUpdateForm, ItemCommentForm, ItemRawEditForm
+from requirements.forms import ItemUpdateForm, DocumentUpdateForm, ItemCommentForm, ItemRawEditForm, VirtualItem
 from requirements.tables import RequirementsTable, ParentRequirementTable, GitFileStatus, GitFileStatusRecord
 
 from doorstop import Tree, Item, DoorstopError
@@ -209,7 +209,6 @@ class DocumentActionView(RequirementMixin, TemplateView):
                 print(file.name, file.size, file.content_type)
                 return HttpResponseRedirect(reverse('index-doc', args=[self._doc.prefix]))
 
-
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['doc'] = self._doc
@@ -265,8 +264,13 @@ class ItemUpdateView(RequirementMixin, TemplateView):
         self._doc = self._tree.find_document(kwargs['doc'])
         if kwargs['item'] != '__NEW__':
             self._item = self._doc.find_item(kwargs['item'])
+            from_item = None
+        else:
+            from_item = self._tree.find_item(kwargs['from']) if 'from' in kwargs else None
+            self._item = VirtualItem(from_item, self._doc.forgein_fields)
         self._form = ItemUpdateForm(item=self._item, doc=self._doc)
         context = self.get_context_data()
+        context['from'] = from_item
         return self.render_to_response(context)
 
     def post(self, request, *args, **kwargs):
