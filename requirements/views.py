@@ -48,8 +48,9 @@ class RequirementMixin(object):
                 if __item.uid == uid:
                     found = True
             else:
-                _next = __item
-                break
+                if __item.active and not __item.deleted:
+                    _next = __item
+                    break
 
         return (_prev, _item, _next) if found else (None, None, None)
 
