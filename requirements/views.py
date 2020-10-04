@@ -12,6 +12,7 @@ from jsonview.views import JsonView
 
 from doorstop.core.validators.item_validator import ItemValidator
 
+from doorstop.core.types import UID
 from requirements.export import export_to_xlsx, import_from_xslx
 from requirements.forms import ItemUpdateForm, DocumentUpdateForm, ItemCommentForm, ItemRawEditForm, VirtualItem
 from requirements.tables import RequirementsTable, ParentRequirementTable, GitFileStatus, GitFileStatusRecord
@@ -29,6 +30,29 @@ class RequirementMixin(object):
         self._doc = None  # type: Optional[Document]
         self._item = None  # type: Optional[Item]
         self._form = None
+
+    @staticmethod
+    def find_neighbours(doc, value):
+        #  type: (Document, str) -> (Optional[Item], Optional[Item], Optional[Item])
+        uid = UID(value)
+
+        found = False
+        _prev = None  # type: Optional[Item]
+        _item = None  # type: Optional[Item]
+        _next = None  # type: Optional[Item]
+
+        for __item in doc.items:
+            if not found:
+                _prev = _item
+                _item = __item
+                if __item.uid == uid:
+                    found = True
+            else:
+                _next = __item
+                break
+
+        return (_prev, _item, _next) if found else (None, None, None)
+
 
     @staticmethod
     def find_child_docs(tree, doc):
@@ -101,15 +125,22 @@ class IndexView(RequirementMixin, SingleTableMixin, ListView):
 class ItemDetailView(RequirementMixin, TemplateView):
     template_name = 'requirements/item_details.html'
 
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self._prev = None  # type: Optional[Item]
+        self._next = None  # type: Optional[Item]
+
     def get(self, request, *args, **kwargs):
         self._doc = self._tree.find_document(kwargs['doc'])
-        self._item = self._doc.find_item(kwargs['item'])
+        # self._item = self._doc.find_item(kwargs['item'])
+        self._prev, self._item, self._next = self.find_neighbours(self._doc, kwargs['item'])
         self._form = ItemCommentForm()
         return super().get(request, *args, **kwargs)
 
     def post(self, request, *args, **kwargs):
         self._doc = self._tree.find_document(kwargs['doc'])
-        self._item = self._doc.find_item(kwargs['item'])
+        # self._item = self._doc.find_item(kwargs['item'])
+        self._prev, self._item, self._next = self.find_neighbours(self._doc, kwargs['item'])
         self._form = ItemCommentForm(request.POST)
         if self._form.is_valid():
             self._form.save(self._item)
@@ -121,6 +152,8 @@ class ItemDetailView(RequirementMixin, TemplateView):
         context['doc'] = self._doc
         context['child_docs'] = self.find_child_docs(self._tree, self._doc)
         context['item'] = self._item
+        context['prev'] = self._prev
+        context['next'] = self._next
         context['childs'] = self._item.find_child_items()
         context['parents'] = self._item.parent_items
         validator = ItemValidator()
@@ -278,7 +311,8 @@ class ItemUpdateView(RequirementMixin, TemplateView):
         if kwargs['item'] != '__NEW__':
             self._item = self._doc.find_item(kwargs['item'])
         self._form = ItemUpdateForm(data=request.POST, item=self._item, doc=self._doc)
-        return self.form_valid() if self._form.is_valid() else self.form_invalid()
+        from_item = request.POST.get('from_item', None)
+        return self.form_valid(from_item) if self._form.is_valid() else self.form_invalid()
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -290,8 +324,11 @@ class ItemUpdateView(RequirementMixin, TemplateView):
             context['table'] = ParentRequirementTable(data=parents, item=self._item)
         return context
 
-    def form_valid(self):
+    def form_valid(self, from_item):
+        #  type: (Optional[Item]) -> None
         item = self._form.save()
+        if from_item is not None:
+            self._tree.link_items(item.uid, from_item)
         return HttpResponseRedirect(reverse('item-details', args=[self._doc.prefix, item.uid]))
 
     def form_invalid(self):

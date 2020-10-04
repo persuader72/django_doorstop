@@ -12,7 +12,7 @@
         <p>Operations</p>
         <ul>
             <li><a href="{% url 'index-doc' doc.prefix %}#{{ item.uid }}">Return to list of {{ doc.prefix }}</a></li>
-            <li><a href="{% url 'item-details' from.document.prefix from.uid %}">Return to list of {{ from.uid }}</a></li>
+            {% if from %}<li><a href="{% url 'item-details' from.document.prefix from.uid %}">Return to list of {{ from.uid }}</a></li>{% endif %}
             {% if item.uid != '__NEW__' %}
             <li><a href="{% url 'item-details' doc.prefix item.uid %}">Show req. {{ item.uid }}</a></li>
             <li><a href="{% url 'item-action' doc.prefix item.uid 'disactivate' %}">Mark as inactive</a></li>
@@ -28,6 +28,7 @@
     <div class="col-md-8">
         <form action="{% url 'item-update' doc.prefix item.uid %}" method="post">
             {% csrf_token %}
+            {% if from %}<input type="hidden" name="from_item" value="{{ from.uid }}">{% endif %}
             {% crispy form %}
         </form>
     </div>
