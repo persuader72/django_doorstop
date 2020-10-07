@@ -1,8 +1,9 @@
 from typing import Optional
 
 from openpyxl import Workbook, load_workbook
+from openpyxl.styles import Font, Fill, PatternFill
 from openpyxl.worksheet.worksheet import Worksheet
-
+from openpyxl.drawing.fill import SolidColorFillProperties
 from doorstop.core.document import Document
 
 
@@ -67,28 +68,56 @@ def export_to_xlsx(doc):
     ws.cell(1, 2, "header")
     ws.cell(1, 3, "text")
     ws.cell(1, 4, "level")
-    ws.cell(1, 5, "parent")
+    ws.cell(1, 5, "pending")
+    ws.cell(1, 6, "deleted")
+    ws.cell(1, 7, "parent")
+
+    ws.column_dimensions['A'].width *= 1.5
+    ws.column_dimensions['B'].width *= 4
+    ws.column_dimensions['C'].width *= 8
 
     for i, ff in enumerate(doc.forgein_fields):
-        ws.cell(1, 6+i, ff)
+        ws.cell(1, 8+i, ff)
+    ws.cell(1, 8+len(doc.forgein_fields), "comments")
 
-    print(doc.forgein_fields)
+    header_font = Font(color='FFFFFFFF')
+    header_fill = PatternFill(start_color='FF000000', end_color='FF000000', fill_type='solid')
+    for i in range(1, 8+len(doc.forgein_fields)+1):
+        ws.cell(1,i).fill = header_fill
+        ws.cell(1,i).font = header_font
 
     last_row = 2
     for item in doc.items:
         ws.cell(last_row, 1, str(item.uid))
+        if item.deleted:
+            ws.cell(last_row, 1).font = Font(strike=True)
         ws.cell(last_row, 2, item.header)
+        if item.deleted:
+            ws.cell(last_row, 2).font = Font(strike=True)
         ws.cell(last_row, 3, item.text)
+        if item.deleted:
+            ws.cell(last_row, 3).font = Font(strike=True)
         ws.cell(last_row, 4, str(item.level))
         pitems = [x.uid.value for x in item.parent_items]
-        ws.cell(last_row, 5, str(','.join(pitems)))
+        ws.cell(last_row, 5, "X" if item.pending else "")
+        ws.cell(last_row, 6, "X" if item.deleted else "")
+        ws.cell(last_row, 7, str(','.join(pitems)))
 
         for i, ff in enumerate(doc.forgein_fields):
             ffi = doc.forgein_fields[ff]
             if ffi['type'] == 'multi':
-                ws.cell(last_row, 6+i, ','.join(item.get(ff)))
+                ws.cell(last_row, 8+i, ','.join(item.get(ff)))
             else:
-                ws.cell(last_row, 6+i, item.get(ff))
+                ws.cell(last_row, 8+i, item.get(ff))
+
+        i = 8 + len(doc.forgein_fields)
+        comments = item.get('comments')
+        if comments is not None:
+            text = ''
+            for comment in comments:
+                text = comment['text']
+            ws.cell(last_row, i, text)
+
         last_row += 1
     wb.save(xlsxfile)
     return xlsxfile
