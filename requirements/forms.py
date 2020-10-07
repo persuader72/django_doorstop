@@ -25,8 +25,9 @@ class VirtualItem(object):
         self.pending = item.pending if item else ''
         self._data = {}
 
-        for f in fields:
-            self._data[f] = item.get(f)
+        if fields is not None:
+            for f in fields:
+                self._data[f] = item.get(f)
 
     def get(self, field):
         return self._data.get(field, None)
