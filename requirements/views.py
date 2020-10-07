@@ -1,5 +1,6 @@
 from typing import Optional, List
 
+from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.files.base import File
 from django.core.files.uploadedfile import UploadedFile
 from django.http import HttpResponseRedirect
@@ -24,7 +25,7 @@ from doorstop.core.builder import build
 from pygit2 import init_repository, Repository
 
 
-class RequirementMixin(object):
+class RequirementMixin(LoginRequiredMixin):
     def __init__(self):
         self._tree = build(root=settings.DOORSTOP_REPO)  # type: Tree
         self._doc = None  # type: Optional[Document]
