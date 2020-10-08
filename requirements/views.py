@@ -3,9 +3,9 @@ from typing import Optional, List
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.files.base import File
 from django.core.files.uploadedfile import UploadedFile
-from django.http import HttpResponseRedirect
+from django.http import HttpResponseRedirect, FileResponse
 from django.urls import reverse
-from django.views.generic import ListView, TemplateView
+from django.views.generic import ListView, TemplateView, DetailView
 from django.conf import settings
 from django_downloadview import VirtualDownloadView
 from django_tables2 import SingleTableMixin
@@ -77,6 +77,18 @@ class RequirementMixin(LoginRequiredMixin):
                 doc = _doc
                 break
         return doc
+
+
+class FileDownloadView(RequirementMixin, DetailView):
+    def get(self, request, *args, **kwargs):
+        self._doc = self._tree.find_document(kwargs['doc'])
+        filename = kwargs['file']
+        if filename is None:
+            raise ValueError("No filename is provided")
+        filename = f'{self._doc.path}/media/{filename}'
+        response = FileResponse(open(filename, 'rb'), content_type="image/png")
+        response['Content-Disposition'] = 'attachment; filename="%s"'%filename
+        return response
 
 
 class VersionControlView(RequirementMixin, TemplateView):

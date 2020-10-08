@@ -37,6 +37,7 @@ INSTALLED_APPS = [
     'django_tables2',
     'django_pygments',
     'django_ace',
+    'django_markdown2',
     'markdownify',
     'crispy_forms',
     'pagedown.apps.PagedownConfig',
