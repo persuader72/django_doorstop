@@ -1,12 +1,12 @@
-django==3.0.7
-django-crispy-forms==1.9.1
+django==3.1.2
+django-crispy-forms==1.9.2
 django-tables2==2.3.1
-django-markdownify==0.8.0
+django-markdownify==0.8.1
 django-pagedown==2.1.2
-django-ace==1.0.7
+django-ace==1.0.8
 django-downloadview==2.1.1
 django-pygments==0.4
-django-jsonview==1.3.1
+django-jsonview==2.0.0
 django-markdown2==0.3.1
 pyyaml==5.3.1
 # Doorstop dependecies
