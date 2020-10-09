@@ -363,11 +363,14 @@ class ItemActionView(RequirementMixin, TemplateView):
         self._target = None  # type: Optional[Item]
         self._error = None  # type: Optional[str]
         self._confirm = 0  # type: int
+        self._where = 'item'
 
     def get(self, request, *args, **kwargs):
         self._doc = self._tree.find_document(kwargs['doc'])
         self._item = self._doc.find_item(kwargs['item'])
         self._action = kwargs['action']
+        if 'where' in kwargs:
+            self._where = kwargs['where']
         if 'target' in kwargs and kwargs['target']:
             self._target = self._tree.find_item(kwargs['target'])
         self._confirm = int(request.GET.get('confirm', '0'))
@@ -384,7 +387,7 @@ class ItemActionView(RequirementMixin, TemplateView):
         if self._confirm == 1:
             if self._action == 'review':
                 self._item.review()
-                return HttpResponseRedirect(reverse('item-update', args=[self._doc.prefix, self._item.uid]))
+                return self._base_redirect()
             elif self._action == 'delete':
                 if self._item.deleted:
                     self._item.delete()
@@ -402,7 +405,7 @@ class ItemActionView(RequirementMixin, TemplateView):
                 return HttpResponseRedirect(reverse('item-update', args=[self._doc.prefix, self._item.uid]))
             elif self._action == 'clear':
                 self._item.clear()
-                return HttpResponseRedirect(reverse('item-update', args=[self._doc.prefix, self._item.uid]))
+                return self._base_redirect()
 
         context = self.get_context_data()
         return self.render_to_response(context)
@@ -414,8 +417,15 @@ class ItemActionView(RequirementMixin, TemplateView):
         context['action'] = self._action
         context['target'] = self._target
         context['error'] = self._error
+        context['where'] = self._where
         context['action_name'] = ItemActionView.ACTION_NAMES[self._action]
         return context
+
+    def _base_redirect(self):
+        if self._where == 'doc':
+            return HttpResponseRedirect(reverse('index-doc', args=[self._doc.prefix])+'#'+self._item.uid.string)
+        else:
+            return HttpResponseRedirect(reverse('item-update', args=[self._doc.prefix, self._item.uid]))
 
 
 class FullGraphView(RequirementMixin, TemplateView):

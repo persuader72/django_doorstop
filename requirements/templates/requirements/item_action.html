@@ -22,7 +22,7 @@
         <hr class="my-4">
         <p>{{ item.text|linebreaksbr }}</p>
         <p class="lead">
-            <a class="btn btn-primary btn-lg" href="{% url 'item-action' doc.prefix item.uid action %}?confirm=1" role="button">Review requirement</a>
+            <a class="btn btn-primary btn-lg" href="{% url 'item-action-return' doc.prefix item.uid action where%}?confirm=1" role="button">Review requirement</a>
         </p>
     </div>
 {% endif %}
@@ -123,7 +123,7 @@
         <hr class="my-4">
         <p>{{ item.text|linebreaksbr }}</p>
         <p class="lead">
-            <a class="btn btn-primary btn-lg" href="{% url 'item-action' doc.prefix item.uid action %}?confirm=1" role="button">Clear requirement</a>
+            <a class="btn btn-primary btn-lg" href="{% url 'item-action-return' doc.prefix item.uid action where%}?confirm=1" role="button">Clear requirement</a>
         </p>
     </div>
 {% endif %}

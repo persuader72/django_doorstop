@@ -134,4 +134,14 @@ class RequirementsTable(Table):
         html += format_html('<a href="{}" class="btn btn-outline-primary btn-sm" title="Delete item"><i class="fa fa-trash"></i></a>',
                             reverse('item-action', args=[record.document.prefix, record.uid.value, 'delete']))
         html += format_html('</div></div>')
+
+        html += format_html('<div class="btn-toolbar" style="margin-top: 4px;"><div class="btn-group">')
+        if not record.reviewed:
+            html += format_html('<a href="{}" class="btn btn-outline-danger btn-sm" title="Review item"><i class="fa fa-search"></i></a>',
+                                reverse('item-action-return', args=[record.document.prefix, record.uid.value, 'review', 'doc']))
+        if not record.cleared:
+            html += format_html('<a href="{}" class="btn btn-outline-danger btn-sm" title="Clear links"><i class="fa fa-angellist"></i></a>',
+                                reverse('item-action-return', args=[record.document.prefix, record.uid.value, 'clear', 'doc']))
+        html += format_html('</div></div>')
+
         return html
