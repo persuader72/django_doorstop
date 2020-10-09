@@ -354,7 +354,8 @@ class ItemActionView(RequirementMixin, TemplateView):
 
     ACTION_REVIEW = 'review'
     ACTION_NAMES = {'review': 'Review', 'disactivate': 'Mark inactive', 'delete': 'Delete',
-                    'unlink': 'Unlink', 'link': 'Link', 'restore': 'Restore', 'import': 'Import'}
+                    'unlink': 'Unlink', 'link': 'Link', 'restore': 'Restore', 'import': 'Import',
+                    'clear': 'Clear'}
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -398,6 +399,9 @@ class ItemActionView(RequirementMixin, TemplateView):
                 return HttpResponseRedirect(reverse('item-update', args=[self._doc.prefix, self._item.uid]))
             elif self._action == 'link':
                 self._tree.link_items(self._item.uid, self._target.uid)
+                return HttpResponseRedirect(reverse('item-update', args=[self._doc.prefix, self._item.uid]))
+            elif self._action == 'clear':
+                self._item.clear()
                 return HttpResponseRedirect(reverse('item-update', args=[self._doc.prefix, self._item.uid]))
 
         context = self.get_context_data()

@@ -1,6 +1,8 @@
+import markdown2
 from django.utils.html import format_html, linebreaks
 from django.urls import reverse
 from django.utils.safestring import mark_safe
+from django_markdown2.templatetags.md2 import force_unicode
 from django_tables2 import Table, Column, BooleanColumn, CheckBoxColumn
 
 from doorstop import Item
@@ -113,7 +115,8 @@ class RequirementsTable(Table):
     @staticmethod
     def render_text(    value, record):
         # type: (str, Item) -> str
-        return mark_safe(linebreaks(record.text))
+        return mark_safe(markdown2.markdown(force_unicode(value), safe_mode=True))
+        # return mark_safe(linebreaks(record.text))
 
     @staticmethod
     def render_actions(record):

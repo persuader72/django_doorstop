@@ -17,6 +17,7 @@
             {% if next %}<li><a href="{% url 'item-details' doc.prefix next.uid %}">Go to next req. {{ next.uid }}</a></li>{% endif %}
             <li><a href="{% url 'item-update' doc.prefix item.uid %}">Update req. of {{ item.uid }}</a></li>
             {% if not item.reviewed %}<li><a href="{% url 'item-action' doc.prefix item.uid 'review' %}">Review requisite {{ item.uid }}</a>{% endif %}</li>
+            {% if not item.cleared %}<li><a href="{% url 'item-action' doc.prefix item.uid 'clear' %}">Clear suspect links {{ item.uid }}</a>{% endif %}</li>
             <li><a href="{% url 'item-rawfile' doc.prefix item.uid %}">Edit raw file of {{ item.uid }}</a></li>
             {% for dc in child_docs %}
                 <li><a href="{% url 'item-update-from' dc.prefix '__NEW__' item.uid %}">Add child to {{ dc.prefix }}</a></li>

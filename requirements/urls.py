@@ -5,6 +5,7 @@ from .views import IndexView, ItemDetailView, ItemUpdateView, DocumentUpdateView
 urlpatterns = [
     path('', IndexView.as_view(), name='index'),
     path('<slug:doc>', IndexView.as_view(), name='index-doc'),
+    path('<slug:doc>/media/<path:file>', FileDownloadView.as_view(), name='index-media'),
     path('graph/<slug:doc>', FullGraphView.as_view(), name='graph'),
     path('graph/data/<slug:doc>', GrpahDataView.as_view(), name='graph-data'),
     path('item/details/<slug:doc>/<slug:item>', ItemDetailView.as_view(), name='item-details'),
