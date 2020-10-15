@@ -32,6 +32,7 @@ class VirtualItem(object):
     def get(self, field):
         return self._data.get(field, None)
 
+
 class ItemCommentForm(forms.Form):
     date = forms.DateTimeField(required=True, input_formats=['%Y-%m-%d %H:%M', '%Y-%m-%d %H:%M:%S'])
     author = forms.CharField(max_length=255, required=True)
