@@ -1,4 +1,4 @@
-from typing import Optional, List
+from typing import Optional, List, Any
 
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.files.base import File
@@ -12,7 +12,6 @@ from django_tables2 import SingleTableMixin
 from jsonview.views import JsonView
 
 from doorstop.core.validators.item_validator import ItemValidator
-
 from doorstop.core.types import UID
 from requirements.export import export_to_xlsx, import_from_xslx
 from requirements.forms import ItemUpdateForm, DocumentUpdateForm, ItemCommentForm, ItemRawEditForm, VirtualItem
@@ -22,7 +21,9 @@ from doorstop import Tree, Item, DoorstopError
 from doorstop.core import Document
 from doorstop.core.builder import build
 
-from pygit2 import init_repository, Repository
+from pygit2 import init_repository, GIT_STATUS_IGNORED, Repository
+
+from .repo import pygit2_pull
 
 
 class RequirementMixin(LoginRequiredMixin):
@@ -55,7 +56,6 @@ class RequirementMixin(LoginRequiredMixin):
 
         return (_prev, _item, _next) if found else (None, None, None)
 
-
     @staticmethod
     def find_child_docs(tree, doc):
         #  type: (Tree, Document) -> List[Document]
@@ -87,12 +87,17 @@ class FileDownloadView(RequirementMixin, DetailView):
             raise ValueError("No filename is provided")
         filename = f'{self._doc.path}/media/{filename}'
         response = FileResponse(open(filename, 'rb'), content_type="image/png")
-        response['Content-Disposition'] = 'attachment; filename="%s"'%filename
+        response['Content-Disposition'] = 'attachment; filename="%s"' % filename
         return response
 
 
 class VersionControlView(RequirementMixin, TemplateView):
     template_name = 'requirements/version_control.html'
+
+    def action(self, repo, action, **kwargs):
+        #  type: (Repository, str, List[Any]) -> None
+        if action == 'pull':
+            pygit2_pull(repo)
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -109,7 +114,6 @@ class VersionControlView(RequirementMixin, TemplateView):
             if status[stat] != GIT_STATUS_IGNORED:
                 table_data.append(GitFileStatusRecord(stat, status[stat]))
         context['table'] = GitFileStatus(data=table_data)
-
         return context
 
 
