@@ -78,7 +78,18 @@ def row_style(record):
         style += 'background-color: #d7ffd3;'
     elif not record.reviewed:
         style += 'background-color: #fffbd3;'
+    elif not record.normative:
+        style += 'background-color: #f1f1f1;'
     return style
+
+
+class ExtendedFields(Column):
+    def render(self, value, **kwargs):
+        value = kwargs['record'].get(kwargs['bound_column'].name)
+        if isinstance(value, list):
+            return ', '.join(value)
+        else:
+            return value
 
 
 class RequirementsTable(Table):
@@ -86,7 +97,6 @@ class RequirementsTable(Table):
     header = Column()
     text = Column()
     level = Column()
-    # active = BooleanColumn(verbose_name='A.', orderable=False)
     reviewed = BooleanColumn(verbose_name='R.', orderable=False)
     normative = BooleanColumn(verbose_name='N.', orderable=False)
     actions = Column(empty_values=())
@@ -101,7 +111,7 @@ class RequirementsTable(Table):
         order_by = 'level'
 
     def __init__(self, **kwargs):
-        super().__init__(**kwargs, extra_columns=[])
+        super().__init__(**kwargs)
 
     @staticmethod
     def render_uid(value, record):

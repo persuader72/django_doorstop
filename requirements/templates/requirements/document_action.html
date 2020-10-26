@@ -34,6 +34,17 @@
     </div>
 {% endif %}
 
+{% if action == 'clean' %}
+    <div class="jumbotron">
+        <h1 class="display-4">Confirm clean document items!</h1>
+        <p class="lead">Yor are about review and clean parent of all item of document {{ doc.prefix }}.</p>
+        <hr class="my-4">
+        <p class="lead">
+            <a class="btn btn-primary btn-lg" href="{% url 'document-action' doc.prefix action%}?confirm=1" role="button">Clean document</a>
+        </p>
+    </div>
+{% endif %}
+
     </div>
     <div class="col-md-1"></div>
 </div>

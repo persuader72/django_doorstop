@@ -4,6 +4,8 @@ from openpyxl import Workbook, load_workbook
 from openpyxl.styles import Font, Fill, PatternFill
 from openpyxl.worksheet.worksheet import Worksheet
 from openpyxl.drawing.fill import SolidColorFillProperties
+
+from doorstop import Tree, Item
 from doorstop.core.document import Document
 
 
@@ -58,12 +60,9 @@ def import_from_xslx(doc):
         item.set('subsystem', get_column_field('subsystem',ws, i))
 
 
-def export_to_xlsx(doc):
-    # type: (Document) -> str
-    xlsxfile = '/tmp/export.xlsx'
-    wb = Workbook()
-    ws = wb.active
-
+def export_doc_to_xlsx(doc, ws):
+    # type: (Document, Worksheet) -> None
+    ws.title = doc.prefix
     ws.cell(1, 1, "uid")
     ws.cell(1, 2, "header")
     ws.cell(1, 3, "text")
@@ -119,5 +118,88 @@ def export_to_xlsx(doc):
             ws.cell(last_row, i, text)
 
         last_row += 1
+
+def export_doc_treac(parent_doc, child_doc, ws):
+    #  type: (Document, Document, Worksheet) -> None
+    ws.title = f'{parent_doc.prefix} vs {child_doc.prefix}'
+    ws.cell(1, 1, f'req of {parent_doc.prefix}')
+    ws.cell(1, 2, f'req of {child_doc.prefix}')
+
+    ws.column_dimensions['A'].width *= 4
+    ws.column_dimensions['B'].width *= 8
+
+    header_font = Font(color='FFFFFFFF')
+    header_fill = PatternFill(start_color='FF000000', end_color='FF000000', fill_type='solid')
+    for i in range(1, 2):
+        ws.cell(1,i).fill = header_fill
+        ws.cell(1,i).font = header_font
+
+    last_row = 2
+    for item in parent_doc.items:
+        if item.normative:
+            ws.cell(last_row, 1, str(item.uid))
+            childs = ''
+            for child in item.find_child_items():  # type: (Item)
+                if child.document.prefix == child_doc.prefix:
+                    childs += str(child.uid) if len(childs) == 0 else ', ' + str(child.uid)
+            ws.cell(last_row, 2, childs)
+            last_row += 1
+
+
+def export_doc_reverse_treac(parent_doc, child_doc, ws):
+    #  type: (Document, Document, Worksheet) -> None
+    ws.title = f' {child_doc.prefix} vs {parent_doc.prefix}'
+    ws.cell(1, 1, f'req of {child_doc.prefix}')
+    ws.cell(1, 2, f'req of {parent_doc.prefix}')
+
+    ws.column_dimensions['A'].width *= 4
+    ws.column_dimensions['B'].width *= 8
+
+    header_font = Font(color='FFFFFFFF')
+    header_fill = PatternFill(start_color='FF000000', end_color='FF000000', fill_type='solid')
+    for i in range(1, 2):
+        ws.cell(1,i).fill = header_fill
+        ws.cell(1,i).font = header_font
+
+    last_row = 2
+    for item in child_doc.items:
+        if item.normative:
+            ws.cell(last_row, 1, str(item.uid))
+            parents = ''
+            for _parent in item.parent_items:  # type: (Item)
+                if _parent.document.prefix == parent_doc.prefix:
+                    parents += str(_parent.uid) if len(parents) == 0 else ', ' + str(_parent.uid)
+            ws.cell(last_row, 2, parents)
+            last_row += 1
+
+
+def export_to_xlsx(doc):
+    xlsxfile = '/tmp/export.xlsx'
+    wb = Workbook()
+    ws = wb.active
+    export_doc_to_xlsx(doc, ws)
+    wb.save(xlsxfile)
+    return xlsxfile
+
+
+def export_full_xslx(tree):
+    #  type: (Tree) -> str
+    wb = Workbook()
+    for i, doc in enumerate(tree.documents):
+        if i >= len(wb.worksheets):
+            wb.create_sheet()
+        ws = wb.worksheets[i]
+        export_doc_to_xlsx(doc, ws)
+    for i, doc in enumerate(tree.documents):  # type: (int, Document)
+        childs = []
+        for j, _child in enumerate(tree.documents):  # type: (int, Document)
+            if _child.parent == doc.prefix:
+                childs.append(_child)
+        for _child in childs:
+            ws = wb.create_sheet()
+            export_doc_treac(doc, _child, ws)
+            ws = wb.create_sheet()
+            export_doc_reverse_treac(doc, _child, ws)
+    xlsxfile = '/tmp/export.xlsx'
     wb.save(xlsxfile)
     return xlsxfile

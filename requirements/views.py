@@ -13,9 +13,9 @@ from jsonview.views import JsonView
 
 from doorstop.core.validators.item_validator import ItemValidator
 from doorstop.core.types import UID
-from requirements.export import export_to_xlsx, import_from_xslx
+from requirements.export import export_full_xslx, import_from_xslx
 from requirements.forms import ItemUpdateForm, DocumentUpdateForm, ItemCommentForm, ItemRawEditForm, VirtualItem
-from requirements.tables import RequirementsTable, ParentRequirementTable, GitFileStatus, GitFileStatusRecord
+from requirements.tables import RequirementsTable, ParentRequirementTable, GitFileStatus, GitFileStatusRecord, ExtendedFields
 
 from doorstop import Tree, Item, DoorstopError
 from doorstop.core import Document
@@ -24,6 +24,11 @@ from doorstop.core.builder import build
 from pygit2 import init_repository, GIT_STATUS_IGNORED, Repository
 
 from .repo import pygit2_pull
+
+# repo = init_repository('.')
+# print(repo.diff())
+# for patch in repo.diff():
+#    print(patch.text)
 
 
 class RequirementMixin(LoginRequiredMixin):
@@ -124,10 +129,6 @@ class IndexView(RequirementMixin, SingleTableMixin, ListView):
 
     def get(self, request, *args, **kwargs):
         self._doc = self._tree.find_document(kwargs['doc']) if 'doc' in kwargs else self._tree.document
-        #repo = init_repository('.')
-        #print(repo.diff())
-        #for patch in repo.diff():
-        #    print(patch.text)
         return super().get(request, *args, **kwargs)
 
     def get_context_data(self, **kwargs):
@@ -135,6 +136,12 @@ class IndexView(RequirementMixin, SingleTableMixin, ListView):
         context['doc'] = self._doc
         context['docs'] = self._tree.documents
         return context
+
+    def get_table_kwargs(self):
+        dynamic = []
+        for _r in self._doc.extended_reviewed:
+            dynamic.append((_r, ExtendedFields(accessor='uid')))
+        return {'extra_columns': dynamic}
 
     def get_queryset(self):
         return self._doc.items
@@ -222,7 +229,7 @@ class DocumentExportView(RequirementMixin, VirtualDownloadView):
         return super().get(request, *args, **kwargs)
 
     def get_file(self):
-        path = export_to_xlsx(self._doc)
+        path = export_full_xslx(self._tree)
         file = open(path, 'rb')
         return File(file, name='exported.xlsx')
 
@@ -230,7 +237,7 @@ class DocumentExportView(RequirementMixin, VirtualDownloadView):
 class DocumentActionView(RequirementMixin, TemplateView):
     template_name = 'requirements/document_action.html'
 
-    ACTION_NAMES = {'import': 'Import'}
+    ACTION_NAMES = {'import': 'Import', 'clean': 'Clean'}
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -243,8 +250,15 @@ class DocumentActionView(RequirementMixin, TemplateView):
         self._action = kwargs['action']
         self._confirm = int(request.GET.get('confirm', '0'))
 
-        context = self.get_context_data()
-        return self.render_to_response(context)
+        if self._confirm == 1:
+            if self._action == 'clean':
+                for _i in self._doc.items:  # type: Item
+                    _i.review()
+                    _i.clear()
+                return HttpResponseRedirect(reverse('index-doc', args=[self._doc.prefix]))
+        else:
+            context = self.get_context_data()
+            return self.render_to_response(context)
 
     def post(self, request, *args, **kwargs):
         self._doc = self._tree.find_document(kwargs['doc'])
@@ -257,7 +271,6 @@ class DocumentActionView(RequirementMixin, TemplateView):
                 with open('/tmp/import.xlsx', 'wb') as f:
                     f.write(file.read())
                 import_from_xslx(self._doc)
-                print(file.name, file.size, file.content_type)
                 return HttpResponseRedirect(reverse('index-doc', args=[self._doc.prefix]))
 
     def get_context_data(self, **kwargs):
@@ -265,7 +278,7 @@ class DocumentActionView(RequirementMixin, TemplateView):
         context['doc'] = self._doc
         context['action'] = self._action
         context['error'] = self._error
-        context['action_name'] = ItemActionView.ACTION_NAMES[self._action]
+        context['action_name'] = DocumentActionView.ACTION_NAMES[self._action]
         return context
 
 
@@ -343,7 +356,7 @@ class ItemUpdateView(RequirementMixin, TemplateView):
         return context
 
     def form_valid(self, from_item):
-        #  type: (Optional[Item]) -> None
+        #  type: (Optional[Item]) -> HttpResponseRedirect
         item = self._form.save()
         if from_item is not None:
             self._tree.link_items(item.uid, from_item)
@@ -403,10 +416,10 @@ class ItemActionView(RequirementMixin, TemplateView):
                 return HttpResponseRedirect("%s#%s" % (reverse('index-doc', args=[self._doc.prefix]), self._item.uid))
             elif self._action == 'unlink':
                 self._item.unlink(self._target.uid)
-                return HttpResponseRedirect(reverse('item-update', args=[self._doc.prefix, self._item.uid]))
+                return self._base_redirect()
             elif self._action == 'link':
                 self._tree.link_items(self._item.uid, self._target.uid)
-                return HttpResponseRedirect(reverse('item-update', args=[self._doc.prefix, self._item.uid]))
+                return self._base_redirect()
             elif self._action == 'clear':
                 self._item.clear()
                 return self._base_redirect()
@@ -429,7 +442,7 @@ class ItemActionView(RequirementMixin, TemplateView):
         if self._where == 'doc':
             return HttpResponseRedirect(reverse('index-doc', args=[self._doc.prefix])+'#'+self._item.uid.string)
         else:
-            return HttpResponseRedirect(reverse('item-update', args=[self._doc.prefix, self._item.uid]))
+            return HttpResponseRedirect(reverse('item-details', args=[self._doc.prefix, self._item.uid]))
 
 
 class FullGraphView(RequirementMixin, TemplateView):
