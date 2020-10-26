@@ -36,12 +36,14 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'django_tables2',
     'django_pygments',
+    'django_markdown2',
     'django_ace',
     'django_markdown2',
     'markdownify',
     'crispy_forms',
     'pagedown.apps.PagedownConfig',
-    'requirements.apps.DoorstopConfig'
+    'requirements.apps.DoorstopConfig',
+    'documents.apps.DoorstopConfig'
 ]
 
 MIDDLEWARE = [
