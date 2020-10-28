@@ -234,6 +234,20 @@ class DocumentExportView(RequirementMixin, VirtualDownloadView):
         return File(file, name='exported.xlsx')
 
 
+class DocumentSourceView(RequirementMixin, TemplateView):
+    template_name = 'requirements/document_source.html'
+
+    def get(self, request, *args, **kwargs):
+        self._doc = self._tree.find_document(kwargs['doc'])
+        context = self.get_context_data()
+        return self.render_to_response(context)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['doc'] = self._doc
+        return context
+
+
 class DocumentActionView(RequirementMixin, TemplateView):
     template_name = 'requirements/document_action.html'
 
@@ -372,12 +386,13 @@ class ItemActionView(RequirementMixin, TemplateView):
     ACTION_REVIEW = 'review'
     ACTION_NAMES = {'review': 'Review', 'disactivate': 'Mark inactive', 'delete': 'Delete',
                     'unlink': 'Unlink', 'link': 'Link', 'restore': 'Restore', 'import': 'Import',
-                    'clear': 'Clear'}
+                    'clear': 'Clear', 'closecomm': 'Close Comment'}
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self._action = ''  # type: str
         self._target = None  # type: Optional[Item]
+        self._index = -1  # type: int
         self._error = None  # type: Optional[str]
         self._confirm = 0  # type: int
         self._where = 'item'
@@ -390,6 +405,8 @@ class ItemActionView(RequirementMixin, TemplateView):
             self._where = kwargs['where']
         if 'target' in kwargs and kwargs['target']:
             self._target = self._tree.find_item(kwargs['target'])
+        if 'index' in kwargs:
+            self._index = kwargs['index']
         self._confirm = int(request.GET.get('confirm', '0'))
 
         if not self._confirm:
@@ -400,6 +417,11 @@ class ItemActionView(RequirementMixin, TemplateView):
                     except DoorstopError as ex:
                         self._error = str(ex)
                         print(self._error)
+            elif self._action == 'closecomm':
+                comments = self._item.get('comments')
+                comments[self._index]['closed'] = True
+                self._item.set('comments', comments)
+                return HttpResponseRedirect("%s" % (reverse('item-details', args=[self._doc.prefix, self._item.uid])))
 
         if self._confirm == 1:
             if self._action == 'review':

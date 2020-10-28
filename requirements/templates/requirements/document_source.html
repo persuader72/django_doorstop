@@ -1,0 +1,28 @@
+{% extends 'requirements/base.html' %}
+{% load crispy_forms_tags %}
+{% load static %}
+{% load pygmentify %}
+
+{% block page_title %}Document {{ doc.prefix }}{% endblock %}
+{% block body_title %}Update Document {{ doc.prefix }}{% endblock %}
+{% block head_extra %}
+    <script type="application/javascript" src="{% static "jquery.min.js" %}"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.48.4/codemirror.min.css"/>
+    <script src="https://uicdn.toast.com/editor/latest/toastui-editor-all.min.js"></script>
+    <link rel="stylesheet" href="https://uicdn.toast.com/editor/latest/toastui-editor.min.css" />
+    <script type="application/javascript" src="{% static "requirements/tuieditor.js" %}"></script>
+    {{ form.media }}
+{% endblock %}
+
+{% block body_contents %}
+<div class="row">
+    <div class="col-md-3">
+        <ul>
+           <li><a href="{% url 'index-doc' doc.prefix %}">Return to list of {{ doc.prefix }}</a></li>
+         </ul>
+    </div>
+    <div class="col-md-10">
+        <div id="editor"></div>
+    </div>
+</div>
+{% endblock %}

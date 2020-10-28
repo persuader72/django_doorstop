@@ -114,6 +114,19 @@ class RequirementsTable(Table):
         super().__init__(**kwargs)
 
     @staticmethod
+    def all_comments_closed(record):
+        #  type: (Item) -> bool
+        comments = record.get('comments')
+        if comments is None:
+            return True
+        for comment in comments:
+            if 'closed' not in comment or not comment['closed']:
+                return False
+        else:
+            return True
+
+
+    @staticmethod
     def render_uid(value, record):
         # type: (str, Item) -> str
         if record.deleted:
@@ -152,6 +165,11 @@ class RequirementsTable(Table):
         if not record.cleared:
             html += format_html('<a href="{}" class="btn btn-outline-danger btn-sm" title="Clear links"><i class="fa fa-angellist"></i></a>',
                                 reverse('item-action-return', args=[record.document.prefix, record.uid.value, 'clear', 'doc']))
+
+        if not RequirementsTable.all_comments_closed(record):
+            html += format_html('<a href="{}" class="btn btn-outline-secondary btn-sm" title="There are open comments"><i class="fa fa-comments"></i></a>',
+                                reverse('item-details', args=[record.document.prefix, record.uid.value]))
+
         html += format_html('</div></div>')
 
         return html

@@ -69,7 +69,10 @@
         {% if comments %}
         <div class="alert alert-dark" role="alert">
         {% for comment in comments %}
-        <p>On {{ comment.date }} from {{ comment.author }}: <em>{{ comment.text }}</em></p>
+        <div class="row" {% if comment.closed %}style="text-decoration: line-through;"{% endif %}>
+            <div class="col-11"><p>On {{ comment.date }} from {{ comment.author }}: <em>{{ comment.text }}</em></p></div>
+            <div class="col-1">{% if not comment.closed %}<a class="btn btn-primary" href="{% url 'item-close-comment' doc.prefix item.uid 'closecomm' forloop.counter0 %}" role="button">Chiudi</a>{% endif %}</div>
+        </div>
         {% endfor %}
         </div>
         {% endif %}
