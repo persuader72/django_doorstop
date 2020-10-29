@@ -167,7 +167,7 @@ class RequirementsTable(Table):
                                 reverse('item-action-return', args=[record.document.prefix, record.uid.value, 'clear', 'doc']))
 
         if not RequirementsTable.all_comments_closed(record):
-            html += format_html('<a href="{}" class="btn btn-outline-secondary btn-sm" title="There are open comments"><i class="fa fa-comments"></i></a>',
+            html += format_html('<a href="{}" class="btn btn-outline-warning btn-sm" title="There are open comments"><i class="fa fa-comments"></i></a>',
                                 reverse('item-details', args=[record.document.prefix, record.uid.value]))
 
         html += format_html('</div></div>')
