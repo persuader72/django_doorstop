@@ -43,7 +43,7 @@
     {{ form.media }}
     <div class="col-md-8">
         <h1>{{ item.uid }}: {{ item.header }}</h1>
-        <p><em>Normative: {{ item.normative }} Reviewed: {{ item.reviewed }}</em></p>
+        <p><em>Normative: <b>{{ item.normative }}</b> Reviewed: <b>{{ item.reviewed }}</b> Level: <b>{{ item.level }}</b></em></p>
         <hr>
         <p>{{ item.text|markdown }}</p>
         <div class="row">
