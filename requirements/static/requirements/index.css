@@ -1,0 +1,30 @@
+.table table {
+  border: 1px solid #FFFFFF;
+  border-collapse: collapse;
+}
+.table table td, table th {
+  border: 1px solid #FFFFFF;
+  padding: 3px 2px;
+}
+.table table tbody td {
+    padding-left: 15px;
+    padding-right: 15px;
+}
+.table table tr:nth-child(even) {
+  background: #D0E4F5;
+}
+.table table thead {
+  background: #0B6FA4;
+  border-bottom: 5px solid #FFFFFF;
+}
+.table table thead th {
+  font-weight: bold;
+  color: #FFFFFF;
+  text-align: center;
+  padding: 2px;
+  border-left: 2px solid #FFFFFF;
+}
+.table table thead th:first-child {
+  border-left: none;
+}
+
