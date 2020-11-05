@@ -1,0 +1,29 @@
+#item-details table {
+  border: 1px solid #FFFFFF;
+  border-collapse: collapse;
+}
+#item-details table td, table th {
+  border: 1px solid #FFFFFF;
+  padding: 3px 2px;
+}
+#item-details table tbody td {
+    padding-left: 15px;
+    padding-right: 15px;
+}
+#item-details table tr:nth-child(even) {
+  background: #D0E4F5;
+}
+#item-details table thead {
+  background: #0B6FA4;
+  border-bottom: 5px solid #FFFFFF;
+}
+#item-details table thead th {
+  font-weight: bold;
+  color: #FFFFFF;
+  text-align: center;
+  border-left: 2px solid #FFFFFF;
+}
+#item-details table thead th:first-child {
+  border-left: none;
+}
+

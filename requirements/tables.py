@@ -138,7 +138,7 @@ class RequirementsTable(Table):
     @staticmethod
     def render_text(    value, record):
         # type: (str, Item) -> str
-        return mark_safe(markdown2.markdown(force_unicode(value), safe_mode=True))
+        return mark_safe(markdown2.markdown(force_unicode(value), safe_mode=True, extras=['tables']))
         # return mark_safe(linebreaks(record.text))
 
     @staticmethod

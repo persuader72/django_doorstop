@@ -2,10 +2,14 @@
 {% load crispy_forms_tags %}
 {% load forgein_field %}
 {% load md2 %}
+{% load static %}
 
 {% block page_title %}Requirments{% endblock %}
 {% block body_title %}Requirement item {{ item.uid }} of Document {{ doc.prefix }}{% endblock %}
-{% block head_extra %}{{ form.media }}{% endblock %}
+{% block head_extra %}
+{{ form.media }}
+<link href="{% static 'requirements/index_details.css' %}" rel="stylesheet">
+{% endblock %}
 
 {% block body_contents %}
 <div class="row">
@@ -40,12 +44,12 @@
         </ul>
         {% endif %}
      </div>
-    {{ form.media }}
-    <div class="col-md-8">
+
+    <div id="item-details" class="col-md-8">
         <h1>{{ item.uid }}: {{ item.header }}</h1>
         <p><em>Normative: <b>{{ item.normative }}</b> Reviewed: <b>{{ item.reviewed }}</b> Level: <b>{{ item.level }}</b></em></p>
         <hr>
-        <p>{{ item.text|markdown }}</p>
+        {{ item.text|markdown:"safe, tables" }}
         <div class="row">
         {% for forgein in doc.forgein_fields %}
             <div class="col-md-2">{{ forgein }}: {{ item|foreign_field:forgein }}</div>
