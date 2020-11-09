@@ -1,7 +1,8 @@
 from typing import Optional
 
 from openpyxl import Workbook, load_workbook
-from openpyxl.styles import Font, Fill, PatternFill
+from openpyxl.styles import Font, Fill, PatternFill, Alignment
+from openpyxl.utils import get_column_letter
 from openpyxl.worksheet.worksheet import Worksheet
 from openpyxl.drawing.fill import SolidColorFillProperties
 
@@ -78,6 +79,7 @@ def export_doc_to_xlsx(doc, ws):
     for i, ff in enumerate(doc.forgein_fields):
         ws.cell(1, 8+i, ff)
     ws.cell(1, 8+len(doc.forgein_fields), "comments")
+    ws.column_dimensions[get_column_letter(8+len(doc.forgein_fields))].width *= 12
 
     header_font = Font(color='FFFFFFFF')
     header_fill = PatternFill(start_color='FF000000', end_color='FF000000', fill_type='solid')
@@ -114,8 +116,13 @@ def export_doc_to_xlsx(doc, ws):
         if comments is not None:
             text = ''
             for comment in comments:
-                text = comment['text']
+                if len(text) > 0:
+                    text += '\n'
+                text += '[X] ' if 'closed' in  comment and comment['closed'] is True else ' [ ]'
+                text += comment['text']
+                text += f' {comment["author"]} {comment["date"]}'
             ws.cell(last_row, i, text)
+            ws.cell(last_row, i).alignment = Alignment(wrapText=True)
 
         last_row += 1
 
