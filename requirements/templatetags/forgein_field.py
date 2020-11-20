@@ -1,5 +1,5 @@
 from django import template
-# from doorstop import Item
+from doorstop import Item
 
 register = template.Library()
 

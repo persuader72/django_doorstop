@@ -7,5 +7,6 @@ urlpatterns = [
     path('d/', include('documents.urls')),
     path('admin/', admin.site.urls),
     path('accounts/', include('django.contrib.auth.urls')),
+    path('martor/', include('martor.urls')),
     path('', RedirectView.as_view(url='/r'), name='index')
 ]

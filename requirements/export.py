@@ -126,6 +126,40 @@ def export_doc_to_xlsx(doc, ws):
 
         last_row += 1
 
+
+def export_doc_attribute_treac(parent_doc, child_doc, attr, ws):
+    #  type: (Document, Document, Worksheet) -> None
+    ws.title = f'{parent_doc.prefix} vs {attr}'
+    ws.cell(1, 1, f'req of {parent_doc.prefix}')
+    ws.cell(1, 2, f'attr {attr}')
+
+    ws.column_dimensions['A'].width *= 4
+    ws.column_dimensions['B'].width *= 8
+
+    header_font = Font(color='FFFFFFFF')
+    header_fill = PatternFill(start_color='FF000000', end_color='FF000000', fill_type='solid')
+    for i in range(1, 2):
+        ws.cell(1,i).fill = header_fill
+        ws.cell(1,i).font = header_font
+
+    print(child_doc.forgein_fields)
+    foreign_field = child_doc.forgein_fields[attr]
+
+    last_row = 2
+    for item in parent_doc.items:
+        if item.normative:
+            ws.cell(last_row, 1, str(item.uid) if parent_doc.prefix != 'RADN' else item.get('orig_ref'))
+            childs = []
+            for child in item.find_child_items():  # type: (Item)
+                if child.document.prefix == child_doc.prefix:
+                    if child.get(attr) not in childs:
+                        childs.append(child.get(attr))
+            _childs = [foreign_field['choices'][x] for x in childs]
+            if len(_childs) > 0:
+                ws.cell(last_row, 2,'* ' + '\n* '.join(_childs))
+            last_row += 1
+
+
 def export_doc_treac(parent_doc, child_doc, ws):
     #  type: (Document, Document, Worksheet) -> None
     ws.title = f'{parent_doc.prefix} vs {child_doc.prefix}'
@@ -144,7 +178,7 @@ def export_doc_treac(parent_doc, child_doc, ws):
     last_row = 2
     for item in parent_doc.items:
         if item.normative:
-            ws.cell(last_row, 1, str(item.uid))
+            ws.cell(last_row, 1, str(item.uid) if parent_doc.prefix != 'RADN' else item.get('orig_ref'))
             childs = ''
             for child in item.find_child_items():  # type: (Item)
                 if child.document.prefix == child_doc.prefix:
@@ -171,11 +205,12 @@ def export_doc_reverse_treac(parent_doc, child_doc, ws):
     last_row = 2
     for item in child_doc.items:
         if item.normative:
-            ws.cell(last_row, 1, str(item.uid))
+            ws.cell(last_row, 1, str(item.uid) if child_doc.prefix != 'RADN' else item.get('orig_ref'))
             parents = ''
             for _parent in item.parent_items:  # type: (Item)
                 if _parent.document.prefix == parent_doc.prefix:
-                    parents += str(_parent.uid) if len(parents) == 0 else ', ' + str(_parent.uid)
+                    _parent_uid = str(_parent.uid) if parent_doc.prefix != 'RADN' else _parent.get('orig_ref')
+                    parents += _parent_uid if len(parents) == 0 else ', ' + _parent_uid
             ws.cell(last_row, 2, parents)
             last_row += 1
 
@@ -207,6 +242,12 @@ def export_full_xslx(tree):
             export_doc_treac(doc, _child, ws)
             ws = wb.create_sheet()
             export_doc_reverse_treac(doc, _child, ws)
+
+    ws = wb.create_sheet()
+    doc = tree.find_document('RADN')
+    doc2 = tree.find_document('RADN-SRS')
+    export_doc_attribute_treac(doc, doc2, 'subsystem', ws)
+
     xlsxfile = '/tmp/export.xlsx'
     wb.save(xlsxfile)
     return xlsxfile

@@ -13,6 +13,7 @@ from django_ace import AceWidget
 from doorstop import Document
 from doorstop.core import Item
 from doorstop.common import load_yaml
+from easymde.widgets import EasyMDEEditor
 
 
 class VirtualItem(object):
@@ -131,7 +132,7 @@ class ItemUpdateForm(forms.Form):
     uid = forms.CharField(max_length=255, required=False, disabled=True)
     level = forms.CharField(max_length=255, required=False)
     header = forms.CharField(max_length=255, required=False)
-    text = forms.CharField(widget=forms.Textarea())
+    text = forms.CharField(widget=EasyMDEEditor)
     active = forms.BooleanField(required=False)
     normative = forms.BooleanField(required=False)
     pending = forms.BooleanField(required=False)

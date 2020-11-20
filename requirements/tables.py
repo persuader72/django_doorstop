@@ -1,11 +1,13 @@
 import markdown2
-from django.utils.html import format_html, linebreaks
+
+from django.utils.html import format_html
 from django.urls import reverse
 from django.utils.safestring import mark_safe
 from django_markdown2.templatetags.md2 import force_unicode
 from django_tables2 import Table, Column, BooleanColumn, CheckBoxColumn
-
 from doorstop import Item
+
+from doorstop.core.validators.item_validator import ItemValidator
 from pygit2 import GIT_STATUS_WT_MODIFIED
 
 
@@ -112,6 +114,7 @@ class RequirementsTable(Table):
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
+        self._validator = ItemValidator()
 
     @staticmethod
     def all_comments_closed(record):
@@ -125,7 +128,6 @@ class RequirementsTable(Table):
         else:
             return True
 
-
     @staticmethod
     def render_uid(value, record):
         # type: (str, Item) -> str
@@ -136,13 +138,15 @@ class RequirementsTable(Table):
                                                                                                         record.uid.value]), value)
 
     @staticmethod
-    def render_text(    value, record):
+    def render_text(value, record):
         # type: (str, Item) -> str
+        if record.deleted:
+            pos = value.find('\n')
+            if pos > 0:
+                value = value[0:pos]
         return mark_safe(markdown2.markdown(force_unicode(value), safe_mode=True, extras=['tables']))
-        # return mark_safe(linebreaks(record.text))
 
-    @staticmethod
-    def render_actions(record):
+    def render_actions(self, record):
         # type: (Item) -> str
         html = format_html('<div class="btn-toolbar"><div class="btn-group">')
         if not record.deleted:
@@ -168,6 +172,11 @@ class RequirementsTable(Table):
 
         if not RequirementsTable.all_comments_closed(record):
             html += format_html('<a href="{}" class="btn btn-outline-warning btn-sm" title="There are open comments"><i class="fa fa-comments"></i></a>',
+                                reverse('item-details', args=[record.document.prefix, record.uid.value]))
+
+        issues = [str(x) for x in self._validator.get_issues(record)]
+        if len(issues) > 0:
+            html += format_html('<a href="{}" class="btn btn-outline-danger btn-sm" title="There are open issues"><i class="fa fa-exclamation-triangle"></i></a>',
                                 reverse('item-details', args=[record.document.prefix, record.uid.value]))
 
         html += format_html('</div></div>')

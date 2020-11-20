@@ -4,7 +4,7 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.files.base import File
 from django.core.files.uploadedfile import UploadedFile
 from django.http import HttpResponseRedirect, FileResponse
-from django.urls import reverse
+from django.urls import reverse, resolve
 from django.views.generic import ListView, TemplateView, DetailView
 from django.conf import settings
 from django_downloadview import VirtualDownloadView
@@ -86,11 +86,17 @@ class RequirementMixin(LoginRequiredMixin):
 
 class FileDownloadView(RequirementMixin, DetailView):
     def get(self, request, *args, **kwargs):
+        current_url = resolve(request.path_info).url_name
+        if current_url == 'doc-media2' or current_url == 'item-update-media2':
+            relpath = 'media2'
+        else:
+            relpath = 'media'
+        print(current_url)
         self._doc = self._tree.find_document(kwargs['doc'])
         filename = kwargs['file']
         if filename is None:
             raise ValueError("No filename is provided")
-        filename = f'{self._doc.path}/media/{filename}'
+        filename = f'{self._doc.path}/{relpath}/{filename}'
         response = FileResponse(open(filename, 'rb'), content_type="image/png")
         response['Content-Disposition'] = 'attachment; filename="%s"' % filename
         return response
