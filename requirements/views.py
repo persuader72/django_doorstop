@@ -14,7 +14,7 @@ from jsonview.views import JsonView
 from doorstop.core.validators.item_validator import ItemValidator
 from doorstop.core.types import UID
 from requirements.export import export_full_xslx, import_from_xslx
-from requirements.forms import ItemUpdateForm, DocumentUpdateForm, ItemCommentForm, ItemRawEditForm, VirtualItem
+from requirements.forms import ItemUpdateForm, DocumentUpdateForm, ItemCommentForm, ItemRawEditForm, VirtualItem, DocumentSourceForm
 from requirements.tables import RequirementsTable, ParentRequirementTable, GitFileStatus, GitFileStatusRecord, ExtendedFields
 
 from doorstop import Tree, Item, DoorstopError
@@ -243,15 +243,33 @@ class DocumentExportView(RequirementMixin, VirtualDownloadView):
 class DocumentSourceView(RequirementMixin, TemplateView):
     template_name = 'requirements/document_source.html'
 
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self._form = None  # type: Optional[DocumentSourceForm]
+
     def get(self, request, *args, **kwargs):
         self._doc = self._tree.find_document(kwargs['doc'])
+        self._form = DocumentSourceForm(doc=self._doc)
         context = self.get_context_data()
         return self.render_to_response(context)
+
+    def post(self, request, *args, **kwargs):
+        self._doc = self._tree.find_document(kwargs['doc'])
+        self._form = DocumentSourceForm(doc=self._doc, post=request.POST)
+        return self.form_valid() if self._form.is_valid() else self.form_invalid()
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['doc'] = self._doc
+        context['form'] = self._form
         return context
+
+    def form_valid(self):
+        self._form.save()
+        return HttpResponseRedirect(reverse('index-doc', args=[self._doc.prefix]))
+
+    def form_invalid(self):
+        return self.render_to_response(self.get_context_data(form=self._form))
 
 
 class DocumentActionView(RequirementMixin, TemplateView):

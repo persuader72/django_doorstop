@@ -1,0 +1,8 @@
+.CodeMirror,
+.CodeMirror-scroll {
+    max-height: 600px;
+}
+
+.CodeMirror pre{
+    font-family:monospace;
+}

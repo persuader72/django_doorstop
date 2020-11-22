@@ -1,5 +1,6 @@
 import datetime
-from typing import Optional, List
+import os
+from typing import Optional, List, Dict
 
 import yaml
 from crispy_forms.helper import FormHelper
@@ -65,6 +66,73 @@ class ItemCommentForm(forms.Form):
         comments.insert(0, {'date': self.cleaned_data['date'], 'author': self.cleaned_data['author'], 'text': self.cleaned_data['text']})
         item.set('comments', comments)
         item.save()
+
+
+class DocumentSourceForm(forms.Form):
+    metadata = forms.CharField(widget=forms.HiddenInput())
+    source = forms.CharField(widget=EasyMDEEditor)
+
+    def __init__(self, doc=None, post=None):
+        #  type: (Optional[Document], Optional[Dict]) -> None
+        self._doc = doc  # type: Optional[Document]
+        self._filepath = os.path.join(doc.path, 'source.md')  # type: str
+        initial_data =  {'source': '', 'metadata': ''}
+
+        if post is not None:
+            initial_data['source'] = post['source']
+            initial_data['metadata'] = post['metadata']
+        elif os.path.exists(self._filepath):
+            initial_data = DocumentSourceForm.read_source(self._filepath)
+        super().__init__(data=initial_data, initial=initial_data)
+        self.helper = FormHelper(self)
+        self.helper.add_input(Submit('submit', "Update Source", css_class='btn-primary'))
+
+    def save(self):
+        _meta = self.cleaned_data['metadata']
+        _source = self.cleaned_data['source']
+
+        with open(self._filepath, 'w') as f:
+            if len(_meta) > 0:
+                f.write(_meta)
+                f.write('\n')
+            f.write(_source)
+
+    @staticmethod
+    def read_source(filename):
+        initial_data = {'source': '', 'metadata': ''}
+
+        meta = ''
+        source = ''
+        state = 0
+        with open(filename, 'r') as f:
+            for line in f:
+                if state == 0:
+                    striped = line.strip()
+                    if len(striped) > 0:
+                        if striped == '---':
+                            meta += line
+                            state = 1
+                        else:
+                            state = 2
+                            source = line
+                elif state == 1:
+                    striped = line.strip()
+                    if striped == '---':
+                        meta += line
+                        state = 2
+                    else:
+                        meta += line
+                elif state == 2:
+                    striped = line.strip()
+                    if len(striped) > 0:
+                        source += line
+                        state = 3
+                else:
+                    source += line
+
+        initial_data['metadata'] = meta
+        initial_data['source'] = source
+        return initial_data
 
 
 class DocumentUpdateForm(forms.Form):

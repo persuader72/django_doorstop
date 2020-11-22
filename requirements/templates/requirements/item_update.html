@@ -24,7 +24,6 @@
         {% render_table table %}
         {% endif %}
      </div>
-    {{ form.media }}
     <div class="col-md-8">
         <form action="{% url 'item-update' doc.prefix item.uid %}" method="post">
             {% csrf_token %}
