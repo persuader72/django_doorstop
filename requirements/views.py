@@ -25,11 +25,6 @@ from pygit2 import init_repository, GIT_STATUS_IGNORED, Repository
 
 from .repo import pygit2_pull
 
-# repo = init_repository('.')
-# print(repo.diff())
-# for patch in repo.diff():
-#    print(patch.text)
-
 
 class RequirementMixin(LoginRequiredMixin):
     def __init__(self):

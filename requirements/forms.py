@@ -29,7 +29,7 @@ class VirtualItem(object):
 
         if fields is not None:
             for f in fields:
-                self._data[f] = item.get(f)
+                self._data[f] = item.get(f) if item else ''
 
     def get(self, field):
         return self._data.get(field, None)

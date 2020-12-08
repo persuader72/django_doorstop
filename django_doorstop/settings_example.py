@@ -131,6 +131,15 @@ LOGOUT_REDIRECT_URL = '/accounts/login'
 STATIC_ROOT = os.path.join(PROJECT_ROOT, 'static')
 
 CRISPY_TEMPLATE_PACK = 'bootstrap4'
+
+EASYMDE_OPTIONS = {
+    'custom_css': ['easymde/easymdecust.css'],
+    'previewImagesInEditor': True,
+    'spellChecker': False,
+    'ìnativeSpellcheck': True,
+    'maxHeight': '500px',
+}
+
 # Change me....
 DOORSTOP_ITEMS_PAGINATE = 20
 DOORSTOP_REPO = '/tmp/repo'
