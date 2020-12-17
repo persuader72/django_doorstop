@@ -7,6 +7,7 @@ from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Layout, Submit, Row, Column
 
 from django import forms
+from django.contrib.auth.models import User
 from django.http import QueryDict
 from django.urls import reverse
 
@@ -41,10 +42,11 @@ class ItemCommentForm(forms.Form):
     author = forms.CharField(max_length=255, required=True)
     text = forms.CharField(required=True)
 
-    def __init__(self, data=None):
+    def __init__(self, data=None, user=None):
+        #  type: (Optional[Dict], Optional[User]) -> None
         initial = {
             'date': datetime.datetime.now(),
-            'author': 's.pagnottelli',
+            'author': user.get_full_name() if len(user.get_full_name()) > 0 else user.get_username(),
             'text': ''
         }
         super().__init__(data=data, initial=initial)

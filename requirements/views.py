@@ -189,7 +189,7 @@ class ItemDetailView(RequirementMixin, TemplateView):
         self._doc = self._tree.find_document(kwargs['doc'])
         # self._item = self._doc.find_item(kwargs['item'])
         self._prev, self._item, self._next = self.find_neighbours(self._doc, kwargs['item'])
-        self._form = ItemCommentForm()
+        self._form = ItemCommentForm(user=request.user)
         return super().get(request, *args, **kwargs)
 
     def post(self, request, *args, **kwargs):
@@ -199,7 +199,7 @@ class ItemDetailView(RequirementMixin, TemplateView):
         self._form = ItemCommentForm(request.POST)
         if self._form.is_valid():
             self._form.save(self._item)
-            self._form = ItemCommentForm()
+            self._form = ItemCommentForm(user=request.user)
         return super().get(request, *args, **kwargs)
 
     def get_context_data(self, **kwargs):
