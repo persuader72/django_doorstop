@@ -8,6 +8,7 @@ from crispy_forms.layout import Layout, Submit, Row, Column
 
 from django import forms
 from django.http import QueryDict
+from django.urls import reverse
 
 from django_ace import AceWidget
 
@@ -22,7 +23,7 @@ class VirtualItem(object):
         self.uid = '__NEW__'
         self.level = ''
         self.header = item.header if item else ''
-        self.text = item.text if item else ''
+        self.text = item.text if item else 'Requiremen text...'
         self.normative = item.normative if item else ''
         self.pending = item.pending if item else ''
         self._data = {}
@@ -274,6 +275,8 @@ class ItemUpdateForm(forms.Form):
         layout = self.init_foreign_fields()
 
         self.helper = FormHelper(self)
+        if item is not None:
+            self.helper.form_action = reverse('item-update', args=(self._doc.prefix, self._item.uid))
         self.helper.layout = Layout(
             Row(
                 Column('uid', css_class='form-group col-md-3 mb-0'),
@@ -291,6 +294,7 @@ class ItemUpdateForm(forms.Form):
         #  type: () -> Item
         if not self._item:
             self._item = self._doc.add_item()
+            self.helper.form_action = reverse('item-update', args=(self._doc.prefix, self._item.uid))
         if self.cleaned_data['level']:
             self._item.level = self.cleaned_data['level']
         self._item.header = self.cleaned_data['header']

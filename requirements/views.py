@@ -97,22 +97,51 @@ class FileDownloadView(RequirementMixin, DetailView):
         return response
 
 
-class VersionControlView(RequirementMixin, TemplateView):
+class VersionControlView(TemplateView):
     template_name = 'requirements/version_control.html'
+
+    def __init__(self, **kwargs):
+        self._curr_file = None
+        self._action = None
+        self._curr_file = None  # type: Optional[str]
+        super().__init__(**kwargs)
 
     def action(self, repo, action, **kwargs):
         #  type: (Repository, str, List[Any]) -> None
         if action == 'pull':
             pygit2_pull(repo)
 
+    def get(self, request, *args, **kwargs):
+        if 'action' in kwargs:
+            self._action = kwargs['action']
+        if 'f' in request.GET:
+            self._curr_file = request.GET['f']
+        return super().get(request, *args, **kwargs)
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
 
         patch_text = ''
         repo = init_repository(settings.DOORSTOP_REPO)
-        for patch in repo.diff():
-            patch_text += patch.text
+
+        if self._curr_file:
+            tree = build(root=settings.DOORSTOP_REPO)
+            context['item'] = tree.find_item(self._curr_file)
+        else:
+            context['item'] = None
+
+        for patch in repo.diff('HEAD'):
+            if self._curr_file is None:
+                patch_text += patch.text
+            else:
+                line = patch.text.partition('\n')[0]
+                if self._curr_file in line:
+                    patch_text += patch.text
         context['patch'] = patch_text
+
+        #i = repo.index
+        #for entry in repo.index:
+        #    print(entry.path)
 
         table_data = []
         status = repo.status()

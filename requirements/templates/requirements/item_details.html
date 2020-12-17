@@ -5,7 +5,9 @@
 {% load static %}
 
 {% block page_title %}Requirments{% endblock %}
-{% block body_title %}Requirement item {{ item.uid }} of Document {{ doc.prefix }}{% endblock %}
+{% block body_title %}Document {{ doc.prefix }}{% endblock %}
+{% block head_center %}Requirement item {{ item.uid }}{% endblock %}
+
 {% block head_extra %}
 {{ form.media }}
 <link href="{% static 'requirements/index_details.css' %}" rel="stylesheet">
@@ -26,6 +28,7 @@
             {% for dc in child_docs %}
                 <li><a href="{% url 'item-update-from' dc.prefix '__NEW__' item.uid %}">Add child to {{ dc.prefix }}</a></li>
             {% endfor %}
+            <li><a href="{% url 'vcs-show' %}?f={{ item.uid }}">Show differences from VCS</a></li>
         </ul>
         {% if childs|length %}
         <p>Child documents</p>

@@ -3,8 +3,8 @@
 {% load render_table from django_tables2 %}
 
 {% block page_title %}Requirments{% endblock %}
-{% block body_title %}Requirement item {{ item.uid }} of Document {{ doc.prefix }}{% endblock %}
-{% block head_extra %}{{ form.media }}{% endblock %}
+{% block body_title %}  Document {{ doc.prefix }}{% endblock %}
+{% block head_center %}Requirement item {{ item.uid }}{% endblock %}
 
 {% block body_contents %}
 <div class="row">
@@ -25,11 +25,7 @@
         {% endif %}
      </div>
     <div class="col-md-8">
-        <form action="{% url 'item-update' doc.prefix item.uid %}" method="post">
-            {% csrf_token %}
-            {% if from %}<input type="hidden" name="from_item" value="{{ from.uid }}">{% endif %}
-            {% crispy form %}
-        </form>
+        {% crispy form %}
     </div>
     <div class="col-md-1"></div>
 </div>

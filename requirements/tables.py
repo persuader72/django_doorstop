@@ -8,7 +8,7 @@ from django_tables2 import Table, Column, BooleanColumn, CheckBoxColumn
 from doorstop import Item
 
 from doorstop.core.validators.item_validator import ItemValidator
-from pygit2 import GIT_STATUS_WT_MODIFIED
+from pygit2 import GIT_STATUS_WT_MODIFIED, GIT_STATUS_INDEX_MODIFIED, GIT_STATUS_WT_NEW
 
 
 class GitFileStatusRecord(object):
@@ -17,9 +17,20 @@ class GitFileStatusRecord(object):
         self.name = name
         self.status = status
 
+    @property
+    def base_name(self):
+        pos =  self.name.rfind('/')
+        return self.name if pos == -1 else self.name[pos+1:-4]
+
     def status_text(self):
         if self.status == GIT_STATUS_WT_MODIFIED:
             return 'Modified'
+        elif self.status == GIT_STATUS_INDEX_MODIFIED:
+            return 'Index changed'
+        elif self.status == GIT_STATUS_WT_NEW:
+            return 'Index new'
+        else:
+            return self.status
 
 
 class GitFileStatus(Table):
@@ -33,6 +44,10 @@ class GitFileStatus(Table):
 
     def __init__(self, data=None):
         super().__init__(data, attrs={'class': 'table table-sm'})
+
+    @staticmethod
+    def render_name(value, record):
+        return format_html(f'<a href="?f={record.base_name}">{record.name}</a>')
 
     @staticmethod
     def render_actions(_record):
@@ -144,6 +159,8 @@ class RequirementsTable(Table):
             pos = value.find('\n')
             if pos > 0:
                 value = value[0:pos]
+        #pre = f"<div id=\"module\" class=\"container\"><div class=\"collapse\" id=\"collapse-{record.uid}\" aria-expanded=\"false\">"
+        #post = f"</div><a role=\"button\" class=\"collapsed\" data-toggle=\"collapse\" href=\"#collapse-{record.uid}\" aria-expanded=\"false\" aria-controls=\"collapse-{record.uid}\"></a></div>"
         return mark_safe(markdown2.markdown(force_unicode(value), safe_mode=True, extras=['tables']))
 
     def render_actions(self, record):

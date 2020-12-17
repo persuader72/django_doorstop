@@ -28,3 +28,20 @@
   border-left: none;
 }
 
+#module {
+}
+#module div.collapse[aria-expanded="false"] {
+    display: block;
+    height: 40px !important;
+    overflow: hidden;
+}
+#module div.collapsing[aria-expanded="false"] {
+    height: 40px !important;
+}
+#module a.collapsed:after  {
+    content: '+ Show More';
+}
+#module a:not(.collapsed):after {
+    content: '- Show Less';
+}
+

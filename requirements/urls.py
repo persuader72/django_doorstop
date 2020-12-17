@@ -24,6 +24,6 @@ urlpatterns = [
     path('item/export/<slug:doc>', DocumentExportView.as_view(), name='document-export'),
     path('doc/action/<slug:doc>/<slug:action>', DocumentActionView.as_view(), name='document-action'),
     path('doc/source/<slug:doc>', DocumentSourceView.as_view(), name='document-source'),
-    path('vcs/', VersionControlView.as_view(), name='version_control'),
+    path('vcs/', VersionControlView.as_view(), name='vcs-show'),
     path('vcs/action/<slug:action>', VersionControlView.as_view(), name='vcs-action'),
 ]

@@ -5,7 +5,7 @@
 {% block page_title %}Requirements {{ doc.prefix }}{% endblock %}
 {% block body_title %}Document {{ doc.prefix }}{% endblock %}
 {% block head_extra %}
-<link href="{% static 'requirements/index.css' %}" rel="stylesheet">
+    <link href="{% static 'requirements/index.css' %}" rel="stylesheet">
 {% endblock %}
 
 {% block body_contents %}
@@ -23,7 +23,7 @@ tr[data-heading='True'] {
         <li><a href="{% url 'document-source' doc.prefix %}">Show source</a></li>
         <li><a href="{% url 'document-action' doc.prefix 'import' %}">Import req. from xslx</a></li>
         <li><a href="{% url 'document-action' doc.prefix 'clean' %}">Review and clean all items</a></li>
-        <li><a href="{% url 'version_control' %}">Version control view</a></li>
+        <li><a href="{% url 'vcs-show' %}">Version control view</a></li>
     </ul>
     Other documents
     <ul>
