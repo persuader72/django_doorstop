@@ -10,6 +10,8 @@ from doorstop import Item
 from doorstop.core.validators.item_validator import ItemValidator
 from pygit2 import GIT_STATUS_WT_MODIFIED, GIT_STATUS_INDEX_MODIFIED, GIT_STATUS_WT_NEW
 
+from requirements.djdoorstop import DjItem
+
 
 class GitFileStatusRecord(object):
     def __init__(self, name, status):
@@ -19,7 +21,7 @@ class GitFileStatusRecord(object):
 
     @property
     def base_name(self):
-        pos =  self.name.rfind('/')
+        pos = self.name.rfind('/')
         return self.name if pos == -1 else self.name[pos+1:-4]
 
     def status_text(self):
@@ -87,7 +89,7 @@ class ParentRequirementTable(Table):
 
 
 def row_style(record):
-    #  type: (Item) -> str
+    #  type: (DjItem) -> str
     style = ''
     if record.deleted:
         style += 'text-decoration: line-through; '
@@ -145,7 +147,7 @@ class RequirementsTable(Table):
 
     @staticmethod
     def render_uid(value, record):
-        # type: (str, Item) -> str
+        # type: (str, DjItem) -> str
         if record.deleted:
             return record.uid
         else:
@@ -154,17 +156,15 @@ class RequirementsTable(Table):
 
     @staticmethod
     def render_text(value, record):
-        # type: (str, Item) -> str
+        # type: (str, DjItem) -> str
         if record.deleted:
             pos = value.find('\n')
             if pos > 0:
                 value = value[0:pos]
-        #pre = f"<div id=\"module\" class=\"container\"><div class=\"collapse\" id=\"collapse-{record.uid}\" aria-expanded=\"false\">"
-        #post = f"</div><a role=\"button\" class=\"collapsed\" data-toggle=\"collapse\" href=\"#collapse-{record.uid}\" aria-expanded=\"false\" aria-controls=\"collapse-{record.uid}\"></a></div>"
         return mark_safe(markdown2.markdown(force_unicode(value), safe_mode=True, extras=['tables']))
 
     def render_actions(self, record):
-        # type: (Item) -> str
+        # type: (DjItem) -> str
         html = format_html('<div class="btn-toolbar"><div class="btn-group">')
         if not record.deleted:
             html += format_html('<a href="{}" class="btn btn-outline-primary btn-sm" title="Edit item"><i class="fa fa-edit"></i></a>',
@@ -179,23 +179,24 @@ class RequirementsTable(Table):
                             reverse('item-action', args=[record.document.prefix, record.uid.value, 'delete']))
         html += format_html('</div></div>')
 
-        html += format_html('<div class="btn-toolbar" style="margin-top: 4px;"><div class="btn-group">')
-        if not record.reviewed:
-            html += format_html('<a href="{}" class="btn btn-outline-danger btn-sm" title="Review item"><i class="fa fa-search"></i></a>',
-                                reverse('item-action-return', args=[record.document.prefix, record.uid.value, 'review', 'doc']))
-        if not record.cleared:
-            html += format_html('<a href="{}" class="btn btn-outline-danger btn-sm" title="Clear links"><i class="fa fa-angellist"></i></a>',
-                                reverse('item-action-return', args=[record.document.prefix, record.uid.value, 'clear', 'doc']))
+        if not record.deleted:
+            html += format_html('<div class="btn-toolbar" style="margin-top: 4px;"><div class="btn-group">')
+            if not record.reviewed:
+                html += format_html('<a href="{}" class="btn btn-outline-danger btn-sm" title="Review item"><i class="fa fa-search"></i></a>',
+                                    reverse('item-action-return', args=[record.document.prefix, record.uid.value, 'review', 'doc']))
+            if not record.cleared:
+                html += format_html('<a href="{}" class="btn btn-outline-danger btn-sm" title="Clear links"><i class="fa fa-angellist"></i></a>',
+                                    reverse('item-action-return', args=[record.document.prefix, record.uid.value, 'clear', 'doc']))
 
-        if not RequirementsTable.all_comments_closed(record):
-            html += format_html('<a href="{}" class="btn btn-outline-warning btn-sm" title="There are open comments"><i class="fa fa-comments"></i></a>',
-                                reverse('item-details', args=[record.document.prefix, record.uid.value]))
+            if not RequirementsTable.all_comments_closed(record):
+                html += format_html('<a href="{}" class="btn btn-outline-warning btn-sm" title="There are open comments"><i class="fa fa-comments"></i></a>',
+                                    reverse('item-details', args=[record.document.prefix, record.uid.value]))
 
-        issues = [str(x) for x in self._validator.get_issues(record)]
-        if len(issues) > 0:
-            html += format_html('<a href="{}" class="btn btn-outline-danger btn-sm" title="There are open issues"><i class="fa fa-exclamation-triangle"></i></a>',
-                                reverse('item-details', args=[record.document.prefix, record.uid.value]))
+            issues = [str(x) for x in self._validator.get_issues(record)]
+            if len(issues) > 0:
+                html += format_html('<a href="{}" class="btn btn-outline-danger btn-sm" title="There are open issues"><i class="fa fa-exclamation-triangle"></i></a>',
+                                    reverse('item-details', args=[record.document.prefix, record.uid.value]))
 
-        html += format_html('</div></div>')
+            html += format_html('</div></div>')
 
         return html

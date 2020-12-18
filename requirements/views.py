@@ -211,8 +211,11 @@ class ItemDetailView(RequirementMixin, TemplateView):
         context['next'] = self._next
         context['childs'] = self._item.find_child_items()
         context['parents'] = self._item.parent_items
-        validator = ItemValidator()
-        issues = validator.get_issues(self._item)
+        if self._item.deleted:
+            issues = []
+        else:
+            validator = ItemValidator()
+            issues = validator.get_issues(self._item)
         context['issues'] = [str(x) for x in issues]
         context['comments'] = self._item.get('comments')
         context['form'] = self._form
