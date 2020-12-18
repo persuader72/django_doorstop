@@ -3,6 +3,7 @@
 {% load forgein_field %}
 {% load md2 %}
 {% load static %}
+{% load octicons %}
 
 {% block page_title %}Requirments{% endblock %}
 {% block body_title %}Document {{ doc.prefix }}{% endblock %}
@@ -49,7 +50,26 @@
      </div>
 
     <div id="item-details" class="col-md-8">
-        <h1>{{ item.uid }}: {{ item.header }}</h1>
+        <h1>
+            <div class="btn-group">
+                {% if prev %}<a type="button" title="Previous item" class="btn btn-outline-primary" href="{% url 'item-details' doc.prefix prev.uid %}" role="button">
+                    {% octicon 'arrow-left' %}
+                </a>{% endif %}
+                <a type="button" title="Previous item" class="btn btn-outline-primary" href="{% url 'item-update' doc.prefix item.uid %}" role="button">
+                    {% octicon 'pencil' %}
+                </a>
+                {% if next %}<a type="button" title="Next item" class="btn btn-outline-primary" href="{% url 'item-details' doc.prefix next.uid %}" role="button">
+                    {% octicon 'arrow-right' %}
+                </a>{% endif %}
+            </div>
+            <div class="btn-group">
+                {% if not item.reviewed %}
+                <a type="button" title="Review item" class="btn btn-outline-warning" href="{% url 'item-action' doc.prefix item.uid 'review' %}">
+                    {% octicon 'thumbsup' %}
+                </a>
+                {% endif %}
+            </div>
+            {{ item.uid }}: {{ item.header }}</h1>
         <p><em>Normative: <b>{{ item.normative }}</b> Reviewed: <b>{{ item.reviewed }}</b> Level: <b>{{ item.level }}</b></em></p>
         <hr>
         {{ item.text|markdown:"safe, tables" }}
