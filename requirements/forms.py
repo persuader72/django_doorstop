@@ -44,9 +44,13 @@ class ItemCommentForm(forms.Form):
 
     def __init__(self, data=None, user=None):
         #  type: (Optional[Dict], Optional[User]) -> None
+        if  user:
+            name = user.get_full_name() if len(user.get_full_name()) > 0 else user.get_username()
+        else:
+            name = 'stefano'
         initial = {
             'date': datetime.datetime.now(),
-            'author': user.get_full_name() if len(user.get_full_name()) > 0 else user.get_username(),
+            'author': name,
             'text': ''
         }
         super().__init__(data=data, initial=initial)
