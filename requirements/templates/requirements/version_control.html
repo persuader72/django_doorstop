@@ -20,6 +20,7 @@
         <li><a href="{% url 'index' %}">Document view</a></li>
         {% if item %}<li><a href="{% url 'item-details' item.document.prefix item.uid %}">Item view</a></li>{% endif %}
         <li><a href="{% url 'vcs-action' 'pull' %}">VCS Pull</a></li>
+        <li><a href="{% url 'vcs-action' 'push' %}">VCS Push</a></li>
     </ul>
 </div>
 <div class="col-md-4">

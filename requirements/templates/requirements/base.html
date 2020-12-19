@@ -18,17 +18,21 @@
 <body>
     <div class="container-fluid">
         <nav class="navbar navbar-expand-md navbar-light bg-light fixed-top">
-            {% block head_left %}
-                <a class="navbar-brand" href="#">{% block body_title %}Page title{% endblock %}</a>
-                <button class="navbar-toggler ml-1" type="button" data-toggle="collapse" data-target="#collapsingNavbar"><span class="navbar-toggler-icon"></span></button>
-            {% endblock %}
-            <span class="navbar-text text-truncate mt-1 w-50 text-center order-1 order-md-last">{% block head_center %}&nbsp;{% endblock %}</span>
-            {% if user.is_authenticated %}
-            <span class="navbar-text small text-truncate mt-1 w-50 text-right order-1 order-md-last">
-                {% if user.first_name %}{{ user.first_name }} {{ user.last_name }}{% else %}Username: {{ user.get_username }} <a href="{% url 'logout' %}">Logut</a>{% endif %}
-            </span>
-            {% else %}
-            {% endif %}
+            <a class="navbar-brand" href="#">DoorStop</a>
+            <button type="button" class="navbar-toggler" data-toggle="collapse" data-target="#navbarCollapse"><span class="navbar-toggler-icon"></span></button>
+            <div class="collapse navbar-collapse justify-content-between" id="navbarCollapse">
+                <div class="navbar-nav">
+                    {% block head_left %}{% endblock %}
+                </div>
+                <div class="navbar-nav">
+                    {% if user.is_authenticated %}
+                    <span class="navbar-text small">
+                        {% if user.first_name %}{{ user.first_name }} {{ user.last_name }}{% else %}Username: {{ user.get_username }} <a href="{% url 'logout' %}">Logut</a>{% endif %}
+                    </span>
+                    {% else %}
+                    {% endif %}
+                </div>
+            </div>
         </nav>
         {% block body_contents %}
         {% endblock %}

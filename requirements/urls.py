@@ -22,6 +22,7 @@ urlpatterns = [
     path('item/closecomm/<slug:doc>/<slug:item>/<slug:action>/<int:index>', ItemActionView.as_view(), name='item-close-comment'),
     path('item/update/<slug:doc>', DocumentUpdateView.as_view(), name='document-update'),
     path('item/export/<slug:doc>', DocumentExportView.as_view(), name='document-export'),
+    path('doc/statistics/<slug:doc>', DocumentSourceView.as_view(), name='document-statistics'),
     path('doc/action/<slug:doc>/<slug:action>', DocumentActionView.as_view(), name='document-action'),
     path('doc/source/<slug:doc>', DocumentSourceView.as_view(), name='document-source'),
     path('vcs/', VersionControlView.as_view(), name='vcs-show'),

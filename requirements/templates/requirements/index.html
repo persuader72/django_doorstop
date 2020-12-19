@@ -5,7 +5,7 @@
 
 {% block page_title %}Requirements {{ doc.prefix }}{% endblock %}
 {% block head_left %}
-<div class="dropdown">
+<div class="nav-item dropdown">
   <button class="btn btn-secondary dropdown-toggle" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
     Document {{ doc.prefix }}
   </button>
@@ -15,9 +15,15 @@
     {% endfor %}
   </div>
 </div>&nbsp;
-<div class="btn-group">
+<div class="nav-item btn-group">
     <a class="btn btn-secondary" href="{% url 'document-update' doc.prefix %}" title="Update document">{% octicon 'tools' %}</a>
     <a class="btn btn-secondary" href="{% url 'vcs-show' %}" title="Show versions control">{% octicon 'versions' %}</a>
+    <a class="btn btn-secondary" href="{% url 'document-statistics' doc.prefix %}" title="Show statistics">{% octicon 'question' %}</a>
+</div>&nbsp;
+<div class="nav-item btn-group">
+    <a class="btn btn-primary" href="{% url 'document-export' doc.prefix %}" title="Esport as XLSX">{% octicon 'desktop-download' %}</a>
+    <a class="btn btn-primary" href="{% url 'document-export' doc.prefix %}" title="Esport as DOCX">{% octicon 'desktop-download' %}</a>
+    <a class="btn btn-primary" href="{% url 'document-export' doc.prefix %}" title="Esport as PDF">{% octicon 'desktop-download' %}</a>
 </div>
 {% endblock %}
 {% block head_extra %}
@@ -35,13 +41,13 @@ tr[data-heading='True'] {
     <p>Operations</p>
     <ul>
         <li><a href="{% url 'item-update' doc.prefix '__NEW__' %}">Create new req in {{ doc.prefix }}</a></li>
-        <li><a href="{% url 'document-export' doc.prefix %}">Export req. to xslx</a></li>
         <li><a href="{% url 'document-source' doc.prefix %}">Show source</a></li>
         <li><a href="{% url 'document-action' doc.prefix 'import' %}">Import req. from xslx</a></li>
         <li><a href="{% url 'document-action' doc.prefix 'clean' %}">Review and clean all items</a></li>
     </ul>
 </div>
 <div class="col-md-10 items-list">
+    {% if warn %}<div class="alert alert-{{ warn.type }}" role="alert">{{ warn.text|safe }}</div>{% endif %}
     {% render_table table %}
 </div>
 {% endblock %}

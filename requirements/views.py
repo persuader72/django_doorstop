@@ -1,3 +1,5 @@
+import os
+import time
 from typing import Optional, List, Any
 
 from django.contrib.auth.mixins import LoginRequiredMixin
@@ -13,17 +15,17 @@ from jsonview.views import JsonView
 
 from doorstop.core.validators.item_validator import ItemValidator
 from doorstop.core.types import UID
+
 from requirements.export import export_full_xslx, import_from_xslx
 from requirements.forms import ItemUpdateForm, DocumentUpdateForm, ItemCommentForm, ItemRawEditForm, VirtualItem, DocumentSourceForm
 from requirements.tables import RequirementsTable, ParentRequirementTable, GitFileStatus, GitFileStatusRecord, ExtendedFields
+from requirements.repo import pygit2_pull, pygit2_commit_and_push, pygit2_init_repository
 
 from doorstop import Tree, Item, DoorstopError
 from doorstop.core import Document
 from doorstop.core.builder import build
 
-from pygit2 import init_repository, GIT_STATUS_IGNORED, Repository
-
-from .repo import pygit2_pull
+from pygit2 import GIT_STATUS_IGNORED, Repository
 
 
 class RequirementMixin(LoginRequiredMixin):
@@ -78,6 +80,15 @@ class RequirementMixin(LoginRequiredMixin):
                 break
         return doc
 
+    @staticmethod
+    def check_warnings():
+        fname = os.path.join(settings.DOORSTOP_REPO, '.django_doorstop')
+        if not os.path.exists(fname) or os.path.getmtime(fname) < time.time() - 86400:
+            vcsurl = reverse('vcs-show')
+            warntxt = f'Your repository is old than 20 hours. Plese pull from server on <a href="{vcsurl}">version control<a> section.'
+            return {'type': 'danger', 'text': warntxt}
+        else:
+            return None
 
 class FileDownloadView(RequirementMixin, DetailView):
     def get(self, request, *args, **kwargs):
@@ -103,6 +114,7 @@ class VersionControlView(TemplateView):
     def __init__(self, **kwargs):
         self._curr_file = None
         self._action = None
+        self._user = None
         self._curr_file = None  # type: Optional[str]
         super().__init__(**kwargs)
 
@@ -110,8 +122,11 @@ class VersionControlView(TemplateView):
         #  type: (Repository, str, List[Any]) -> None
         if action == 'pull':
             pygit2_pull(repo)
+        elif action == 'push':
+            pygit2_commit_and_push(self._user, repo)
 
     def get(self, request, *args, **kwargs):
+        self._user = request.user
         if 'action' in kwargs:
             self._action = kwargs['action']
         if 'f' in request.GET:
@@ -122,7 +137,8 @@ class VersionControlView(TemplateView):
         context = super().get_context_data(**kwargs)
 
         patch_text = ''
-        repo = init_repository(settings.DOORSTOP_REPO)
+        repo = pygit2_init_repository(self._user)
+        self.action(repo, self._action)
 
         if self._curr_file:
             tree = build(root=settings.DOORSTOP_REPO)
@@ -165,6 +181,7 @@ class IndexView(RequirementMixin, SingleTableMixin, ListView):
         context = super().get_context_data(**kwargs)
         context['doc'] = self._doc
         context['docs'] = self._tree.documents
+        context['warn'] = self.check_warnings()
         return context
 
     def get_table_kwargs(self):
