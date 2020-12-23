@@ -3,6 +3,7 @@ import time
 from typing import Optional, List, Any
 
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib.auth.models import User
 from django.core.files.base import File
 from django.core.files.uploadedfile import UploadedFile
 from django.http import HttpResponseRedirect, FileResponse
@@ -27,9 +28,12 @@ from doorstop.core.builder import build
 
 from pygit2 import GIT_STATUS_IGNORED, Repository
 
+from requirements.utils import repository_path
+
 
 class RequirementMixin(LoginRequiredMixin):
     def __init__(self):
+        self._user = None  # type: Optional[User]
         self._tree = build(root=settings.DOORSTOP_REPO)  # type: Tree
         self._doc = None  # type: Optional[Document]
         self._item = None  # type: Optional[Item]
@@ -80,15 +84,15 @@ class RequirementMixin(LoginRequiredMixin):
                 break
         return doc
 
-    @staticmethod
-    def check_warnings():
-        fname = os.path.join(settings.DOORSTOP_REPO, '.django_doorstop')
+    def check_warnings(self):
+        fname = os.path.join(repository_path(self._user), '.django_doorstop')
         if not os.path.exists(fname) or os.path.getmtime(fname) < time.time() - 86400:
             vcsurl = reverse('vcs-show')
             warntxt = f'Your repository is old than 20 hours. Plese pull from server on <a href="{vcsurl}">version control<a> section.'
             return {'type': 'danger', 'text': warntxt}
         else:
             return None
+
 
 class FileDownloadView(RequirementMixin, DetailView):
     def get(self, request, *args, **kwargs):
@@ -122,6 +126,9 @@ class VersionControlView(TemplateView):
         #  type: (Repository, str, List[Any]) -> None
         if action == 'pull':
             pygit2_pull(repo)
+            with open(os.path.join(repository_path(self._user), '.django_doorstop'), 'a'):
+                os.utime(os.path.join(repository_path(self._user), '.django_doorstop'), None)
+
         elif action == 'push':
             pygit2_commit_and_push(self._user, repo)
 
@@ -174,6 +181,7 @@ class IndexView(RequirementMixin, SingleTableMixin, ListView):
     paginate_by = settings.DOORSTOP_ITEMS_PAGINATE
 
     def get(self, request, *args, **kwargs):
+        self._user = request.user
         self._doc = self._tree.find_document(kwargs['doc']) if 'doc' in kwargs else self._tree.document
         return super().get(request, *args, **kwargs)
 

@@ -1,7 +1,7 @@
 {% extends 'requirements/base.html' %}
 {% load crispy_forms_tags %}
 
-{% block page_title %}Requirments{% endblock %}
+{% block page_title %}DS {{ action }} {{ item.uid }}{% endblock %}
 {% block body_title %}{{ action_name }} Requirement item {{ item.uid }} of Document {{ doc.prefix }}{% endblock %}
 {% block head_extra %}{{ form.media }}{% endblock %}
 

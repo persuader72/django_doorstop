@@ -5,9 +5,24 @@
 {% load static %}
 {% load octicons %}
 
-{% block page_title %}Requirments{% endblock %}
+{% block page_title %}DS {{ item.uid }}{% endblock %}
 {% block body_title %}Document {{ doc.prefix }}{% endblock %}
 {% block head_center %}Requirement item {{ item.uid }}{% endblock %}
+{% block head_left %}
+<div class="nav-item dropdown">
+  <button class="btn btn-secondary dropdown-toggle" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+    Document {{ doc.prefix }}
+  </button>
+  <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
+    {% for doc in docs %}
+    <a class="dropdown-item" href="{% url 'index-doc' doc.prefix %}">{{ doc.prefix }}</a>
+    {% endfor %}
+  </div>
+</div>&nbsp;
+<div class="nav-item btn-group">
+    <a class="btn btn-secondary" href="{% url 'item-update' doc.prefix item.uid %}" title="Update item">{% octicon 'pencil' %}</a>
+</div>&nbsp;
+{% endblock %}
 
 
 
