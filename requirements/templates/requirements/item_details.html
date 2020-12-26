@@ -6,7 +6,6 @@
 {% load octicons %}
 
 {% block page_title %}DS {{ item.uid }}{% endblock %}
-{% block body_title %}Document {{ doc.prefix }}{% endblock %}
 {% block head_center %}Requirement item {{ item.uid }}{% endblock %}
 {% block head_left %}
 <div class="nav-item dropdown">
@@ -19,8 +18,15 @@
     {% endfor %}
   </div>
 </div>&nbsp;
-<div class="nav-item btn-group">
-    <a class="btn btn-secondary" href="{% url 'item-update' doc.prefix item.uid %}" title="Update item">{% octicon 'pencil' %}</a>
+<div class="nav-item dropdown">
+  <button class="btn btn-secondary dropdown-toggle" type="button" id="dropdownMenuButton2" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+    Item {{ item.uid }}
+  </button>
+  <div class="dropdown-menu" aria-labelledby="dropdownMenuButton2">
+    {% for item2 in doc.items %}
+    <a class="dropdown-item" href="{% url 'item-details' doc.prefix item2.uid %}">{{ item2.uid }}</a>
+    {% endfor %}
+  </div>
 </div>&nbsp;
 {% endblock %}
 
@@ -40,8 +46,6 @@
             {% if prev %}<li><a href="{% url 'item-details' doc.prefix prev.uid %}">Go to prev req. {{ prev.uid }}</a></li>{% endif %}
             {% if next %}<li><a href="{% url 'item-details' doc.prefix next.uid %}">Go to next req. {{ next.uid }}</a></li>{% endif %}
             <li><a href="{% url 'item-update' doc.prefix item.uid %}">Update req. of {{ item.uid }}</a></li>
-            {% if not item.reviewed %}<li><a href="{% url 'item-action' doc.prefix item.uid 'review' %}">Review requisite {{ item.uid }}</a>{% endif %}</li>
-            {% if not item.cleared %}<li><a href="{% url 'item-action' doc.prefix item.uid 'clear' %}">Clear suspect links {{ item.uid }}</a>{% endif %}</li>
             <li><a href="{% url 'item-rawfile' doc.prefix item.uid %}">Edit raw file of {{ item.uid }}</a></li>
             {% for dc in child_docs %}
                 <li><a href="{% url 'item-update-from' dc.prefix '__NEW__' item.uid %}">Add child to {{ dc.prefix }}</a></li>
@@ -85,6 +89,11 @@
                     {% octicon 'thumbsup' %}
                 </a>
                 {% endif %}
+                {% if not item.cleared %}
+                <a type="button" title="Clear suspect links" class="btn btn-outline-warning" href="{% url 'item-action' doc.prefix item.uid 'review' %}">
+                    {% octicon 'issue-closed' %}
+                </a>
+                {% endif %}
             </div>
             <span {% if item.deleted %}style="text-decoration: line-through;"{% endif %}>{{ item.uid }}: {{ item.header }}</span></h1>
         <p><em>
@@ -114,7 +123,7 @@
         <hr>
         {% crispy form %}
         <hr>
-        {% if comments %}
+        {% if perms.requirements.internal and comments %}
         <div class="alert alert-dark" role="alert">
         {% for comment in comments %}
         <div class="row" {% if comment.closed %}style="text-decoration: line-through;"{% endif %}>

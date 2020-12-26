@@ -199,7 +199,9 @@ class IndexView(RequirementMixin, SingleTableMixin, ListView):
         return {'extra_columns': dynamic}
 
     def get_queryset(self):
-        return self._doc.items
+        # return self._doc.items
+        return sorted(i for i in self._doc._iter() if i.active and not i.deleted)
+
 
 
 class ItemDetailView(RequirementMixin, TemplateView):
@@ -230,8 +232,10 @@ class ItemDetailView(RequirementMixin, TemplateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['doc'] = self._doc
+        context['docs'] = self._tree.documents
         context['child_docs'] = self.find_child_docs(self._tree, self._doc)
         context['item'] = self._item
+        context['items'] = [str(x.uid) for x in self._doc.items]
         context['prev'] = self._prev
         context['next'] = self._next
         context['childs'] = self._item.find_child_items()
