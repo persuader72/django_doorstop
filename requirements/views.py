@@ -200,7 +200,7 @@ class IndexView(RequirementMixin, SingleTableMixin, ListView):
 
     def get_queryset(self):
         # return self._doc.items
-        return sorted(i for i in self._doc._iter() if i.active and not i.deleted)
+        return sorted(i for i in self._doc._iter() if i.active and (not i.deleted or self._user.has_perm('requirements.internal')))
 
 
 
