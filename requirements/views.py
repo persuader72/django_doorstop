@@ -317,6 +317,7 @@ class DocumentSourceView(RequirementMixin, TemplateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['doc'] = self._doc
+        context['docs'] = self._tree.documents
         context['form'] = self._form
         return context
 

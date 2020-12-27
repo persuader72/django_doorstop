@@ -17,17 +17,10 @@
     <a class="dropdown-item" href="{% url 'index-doc' doc.prefix %}">{{ doc.prefix }}</a>
     {% endfor %}
   </div>
-</div>&nbsp;
-<div class="nav-item dropdown">
-  <button class="btn btn-secondary dropdown-toggle" type="button" id="dropdownMenuButton2" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-    Item {{ item.uid }}
-  </button>
-  <div class="dropdown-menu" aria-labelledby="dropdownMenuButton2">
-    {% for item2 in doc.items %}
-    <a class="dropdown-item" href="{% url 'item-details' doc.prefix item2.uid %}">{{ item2.uid }}</a>
-    {% endfor %}
-  </div>
-</div>&nbsp;
+</div>&nbsp
+<div class="nav-item btn-group">
+    <a class="btn btn-secondary" href="{% url 'index-doc' doc.prefix %}" title="Return to document index">{% octicon 'fold-up' %}</a>
+</div>
 {% endblock %}
 
 

@@ -41,6 +41,7 @@ INSTALLED_APPS = [
     'django_markdown2',
     'markdownify',
     'crispy_forms',
+    'octicons_v10',
     'pagedown.apps.PagedownConfig',
     'requirements.apps.DoorstopConfig',
     'documents.apps.DoorstopConfig'
