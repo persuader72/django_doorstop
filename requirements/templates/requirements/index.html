@@ -4,6 +4,7 @@
 {% load octicons %}
 
 {% block page_title %}DS {{ doc.prefix }}{% endblock %}
+
 {% block head_left %}
 <div class="nav-item dropdown">
   <button class="btn btn-secondary dropdown-toggle" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
@@ -17,6 +18,7 @@
 </div>&nbsp;
 <div class="nav-item btn-group">
     <a class="btn btn-secondary" href="{% url 'document-update' doc.prefix %}" title="Update document">{% octicon 'tools' %}</a>
+    <a class="btn btn-secondary" href="{% url 'document-trashcan' doc.prefix %}" title="Document trashcan">{% octicon 'trash' %}</a>
     <a class="btn btn-secondary" href="{% url 'vcs-show' %}" title="Show versions control">{% octicon 'versions' %}</a>
     <a class="btn btn-secondary" href="{% url 'document-statistics' doc.prefix %}" title="Show statistics">{% octicon 'question' %}</a>
 </div>&nbsp;
@@ -26,6 +28,11 @@
     <a class="btn btn-primary" href="{% url 'document-export' doc.prefix %}" title="Esport as PDF">{% octicon 'desktop-download' %}</a>
 </div>
 {% endblock %}
+
+{% block head_center %}
+<div style="font-size: 1.25rem;" class="nav-item nav-link active">Index of document {{ doc.prefix }}</div>
+{% endblock %}
+
 {% block head_extra %}
     <link href="{% static 'requirements/index.css' %}" rel="stylesheet">
 {% endblock %}
@@ -50,6 +57,6 @@ tr[data-heading='True'] {
     {% if warn %}<div class="alert alert-{{ warn.type }}" role="alert">{{ warn.text|safe }}</div>{% endif %}
     {% render_table table %}
 </div>
-{% endblock %}
 </div>
+{% endblock %}
 

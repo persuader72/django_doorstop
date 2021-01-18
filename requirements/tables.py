@@ -13,28 +13,6 @@ from pygit2 import GIT_STATUS_WT_MODIFIED, GIT_STATUS_INDEX_MODIFIED, GIT_STATUS
 from requirements.djdoorstop import DjItem
 
 
-class GitFileStatusRecord(object):
-    def __init__(self, name, status):
-        self.selected = False
-        self.name = name
-        self.status = status
-
-    @property
-    def base_name(self):
-        pos = self.name.rfind('/')
-        return self.name if pos == -1 else self.name[pos+1:-4]
-
-    def status_text(self):
-        if self.status == GIT_STATUS_WT_MODIFIED:
-            return 'Modified'
-        elif self.status == GIT_STATUS_INDEX_MODIFIED:
-            return 'Index changed'
-        elif self.status == GIT_STATUS_WT_NEW:
-            return 'Index new'
-        else:
-            return self.status
-
-
 class GitFileStatus(Table):
     selected = CheckBoxColumn()
     name = Column(verbose_name='File name')
@@ -199,4 +177,36 @@ class RequirementsTable(Table):
 
             html += format_html('</div></div>')
 
+        return html
+
+
+class TrashcanItem(object):
+    def __init__(self, _doc, _uid):
+        self.uid = _uid
+        self.document = _doc
+        self.header = ''
+        self.text = ''
+
+
+class TrashcanRequirementsTable(Table):
+    uid = Column()
+    header = Column()
+    text = Column()
+    actions = Column(empty_values=())
+
+    class Meta:
+        template_name = "django_tables2/bootstrap4.html"
+        order_by = 'level'
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self._validator = ItemValidator()
+
+    def render_actions(self, record):
+        # type: (DjItem) -> str
+        html = format_html('<div class="btn-toolbar"><div class="btn-group">')
+        html += format_html(
+            '<a href="{}" class="btn btn-outline-primary btn-sm" title="Restore item"><i class="fa fa-arrow-circle-o-up"></i></a>',
+            reverse('item-action', args=[record.document, record.uid, 'restore']))
+        html += format_html('</div></div>')
         return html

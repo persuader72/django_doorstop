@@ -1,7 +1,9 @@
 import os
+import shutil
 import time
 from typing import Optional, List, Any
 
+import yaml
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.models import User
 from django.core.files.base import File
@@ -12,22 +14,21 @@ from django.views.generic import ListView, TemplateView, DetailView
 from django.conf import settings
 from django_downloadview import VirtualDownloadView
 from django_tables2 import SingleTableMixin
-from jsonview.views import JsonView
 
+from jsonview.views import JsonView
+from doorstop.core.item import UnknownItem
 from doorstop.core.validators.item_validator import ItemValidator
 from doorstop.core.types import UID
-
-from requirements.export import export_full_xslx, import_from_xslx
-from requirements.forms import ItemUpdateForm, DocumentUpdateForm, ItemCommentForm, ItemRawEditForm, VirtualItem, DocumentSourceForm
-from requirements.tables import RequirementsTable, ParentRequirementTable, GitFileStatus, GitFileStatusRecord, ExtendedFields
-from requirements.repo import pygit2_pull, pygit2_commit_and_push, pygit2_init_repository
-
 from doorstop import Tree, Item, DoorstopError
 from doorstop.core import Document
 from doorstop.core.builder import build
 
-from pygit2 import GIT_STATUS_IGNORED, Repository
-
+from requirements.djdoorstop import DjItem
+from requirements.export import export_full_xslx, import_from_xslx
+from requirements.forms import ItemUpdateForm, DocumentUpdateForm, ItemCommentForm, ItemRawEditForm, VirtualItem, DocumentSourceForm
+from requirements.tables import RequirementsTable, ParentRequirementTable, GitFileStatus, ExtendedFields, \
+    TrashcanRequirementsTable, TrashcanItem
+from requirements.repo import MyPyGit2
 from requirements.utils import repository_path
 
 
@@ -36,7 +37,7 @@ class RequirementMixin(LoginRequiredMixin):
         self._user = None  # type: Optional[User]
         self._tree = build(root=settings.DOORSTOP_REPO)  # type: Tree
         self._doc = None  # type: Optional[Document]
-        self._item = None  # type: Optional[Item]
+        self._item = None  # type: Optional[DjItem]
         self._form = None
 
     @staticmethod
@@ -120,17 +121,17 @@ class VersionControlView(TemplateView):
         self._action = None
         self._user = None
         self._curr_file = None  # type: Optional[str]
+        self._vcs = None  # type: Optional[MyPyGit2]
         super().__init__(**kwargs)
 
-    def action(self, repo, action, **kwargs):
-        #  type: (Repository, str, List[Any]) -> None
+    def action(self, action, **kwargs):
+        #  type: (str, List[Any]) -> None
         if action == 'pull':
-            pygit2_pull(repo)
+            self._vcs.pull()
             with open(os.path.join(repository_path(self._user), '.django_doorstop'), 'a'):
                 os.utime(os.path.join(repository_path(self._user), '.django_doorstop'), None)
-
         elif action == 'push':
-            pygit2_commit_and_push(self._user, repo)
+            self._vcs.commit_and_push()
 
     def get(self, request, *args, **kwargs):
         self._user = request.user
@@ -142,36 +143,15 @@ class VersionControlView(TemplateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-
-        patch_text = ''
-        repo = pygit2_init_repository(self._user)
-        self.action(repo, self._action)
-
+        self._vcs = MyPyGit2(self._user)
+        self.action(self._action)
         if self._curr_file:
             tree = build(root=settings.DOORSTOP_REPO)
             context['item'] = tree.find_item(self._curr_file)
         else:
             context['item'] = None
-
-        for patch in repo.diff('HEAD'):
-            if self._curr_file is None:
-                patch_text += patch.text
-            else:
-                line = patch.text.partition('\n')[0]
-                if self._curr_file in line:
-                    patch_text += patch.text
-        context['patch'] = patch_text
-
-        #i = repo.index
-        #for entry in repo.index:
-        #    print(entry.path)
-
-        table_data = []
-        status = repo.status()
-        for stat in status:
-            if status[stat] != GIT_STATUS_IGNORED:
-                table_data.append(GitFileStatusRecord(stat, status[stat]))
-        context['table'] = GitFileStatus(data=table_data)
+        context['patch'] = self._vcs.diff_patch()
+        context['table'] = GitFileStatus(data=self._vcs.modified_files())
         return context
 
 
@@ -201,7 +181,6 @@ class IndexView(RequirementMixin, SingleTableMixin, ListView):
     def get_queryset(self):
         # return self._doc.items
         return sorted(i for i in self._doc._iter() if i.active and (not i.deleted or self._user.has_perm('requirements.internal')))
-
 
 
 class ItemDetailView(RequirementMixin, TemplateView):
@@ -239,7 +218,7 @@ class ItemDetailView(RequirementMixin, TemplateView):
         context['prev'] = self._prev
         context['next'] = self._next
         context['childs'] = self._item.find_child_items()
-        context['parents'] = self._item.parent_items
+        context['parents'] = [x for x in self._item.parent_items if not isinstance(x, UnknownItem) != '']
         if self._item.deleted:
             issues = []
         else:
@@ -377,6 +356,40 @@ class DocumentActionView(RequirementMixin, TemplateView):
         return context
 
 
+class DocumentTrashcanView(RequirementMixin, SingleTableMixin, ListView):
+    template_name = 'requirements/document_trashcan.html'
+    table_class = TrashcanRequirementsTable
+    paginate_by = settings.DOORSTOP_ITEMS_PAGINATE
+
+    def get(self, request, *args, **kwargs):
+        self._user = request.user
+        self._doc = self._tree.find_document(kwargs['doc']) if 'doc' in kwargs else self._tree.document
+        return super().get(request, *args, **kwargs)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['doc'] = self._doc
+        context['docs'] = self._tree.documents
+        context['warn'] = self.check_warnings()
+        return context
+
+    def get_queryset(self):
+        # return self._doc.items
+        items = []
+        path = os.path.join(self._doc.path, 'trash')
+        if not os.path.exists(path):
+            os.mkdir(path)
+        for filename in os.listdir(path):
+            basename, extens = os.path.splitext(filename)
+            tcitem = TrashcanItem(self._doc.prefix, basename)
+            with open(os.path.join(path, filename), 'r') as f:
+                item = yaml.load(f)
+                tcitem.header = item.get('header')
+                tcitem.text = item.get('text')
+            items.append(tcitem)
+        return items
+
+
 class ItemRawFileView(RequirementMixin, TemplateView):
     template_name = 'requirements/item_rawfile.html'
 
@@ -418,11 +431,13 @@ class ItemUpdateView(RequirementMixin, TemplateView):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self._form = None  # type: Optional[ItemUpdateForm]
+        self._prev = None  # type: Optional[Item]
+        self._next = None  # type: Optional[Item]
 
     def get(self, request, *args, **kwargs):
         self._doc = self._tree.find_document(kwargs['doc'])
         if kwargs['item'] != '__NEW__':
-            self._item = self._doc.find_item(kwargs['item'])
+            self._prev, self._item, self._next = self.find_neighbours(self._doc, kwargs['item'])
             from_item = None
         else:
             from_item = self._tree.find_item(kwargs['from']) if 'from' in kwargs else None
@@ -438,16 +453,21 @@ class ItemUpdateView(RequirementMixin, TemplateView):
             self._item = self._doc.find_item(kwargs['item'])
         self._form = ItemUpdateForm(data=request.POST, item=self._item, doc=self._doc)
         from_item = request.POST.get('from_item', None)
+        print(request.FILES)
         return self.form_valid(from_item) if self._form.is_valid() else self.form_invalid()
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['doc'] = self._doc
+        context['docs'] = self._tree.documents
         context['item'] = self._item if self._item else {'uid': '__NEW__'}
+        context['prev'] = self._prev
+        context['next'] = self._next
         context['form'] = self._form
-        parents = self._item.parent_items if hasattr(self._item, 'parent_items') else []
-        if parents:
-            context['table'] = ParentRequirementTable(data=parents, item=self._item)
+        context['parents'] = [x for x in self._item.parent_items if not isinstance(x, UnknownItem) != ''] \
+            if not isinstance(self._item, VirtualItem) else []
+        if len(context['parents']) > 0:
+            context['table'] = ParentRequirementTable(data=context['parents'], item=self._item)
         return context
 
     def form_valid(self, from_item):
@@ -477,11 +497,40 @@ class ItemActionView(RequirementMixin, TemplateView):
         self._error = None  # type: Optional[str]
         self._confirm = 0  # type: int
         self._where = 'item'
+        self._user = None
+        self._vcs = None  # type: Optional[MyPyGit2]
+
+    def action_delete_item(self):
+        self._item.deleted = False
+        if not os.path.exists(os.path.join(self._doc.path, 'trash')):
+            os.mkdir(os.path.join(self._doc.path, 'trash'))
+        dstpath = os.path.join(self._doc.path, 'trash', os.path.basename(self._item.path))
+        shutil.copy2(self._item.path, dstpath)
+        if self._item.references:
+            for ref in self._item.references:
+                dstpath = os.path.join(self._doc.path, 'trash', os.path.basename(ref['path']))
+                shutil.move(ref['path'], dstpath)
+        self._item.delete()
+
+    def action_restore_item(self):
+        dstpath = os.path.join(self._doc.path, os.path.basename(self._item.path))
+        shutil.copy2(self._item.path, dstpath)
+        if self._item.references:
+            for ref in self._item.references:
+                dstpath = os.path.join(self._doc.path, os.path.basename(ref['path']))
+                shutil.move(ref['path'], dstpath)
+        self._item.delete()
 
     def get(self, request, *args, **kwargs):
         self._doc = self._tree.find_document(kwargs['doc'])
-        self._item = self._doc.find_item(kwargs['item'])
+        try:
+            self._item = self._doc.find_item(kwargs['item'])
+        except DoorstopError:
+            self._item = Item(self._doc, os.path.join(self._doc.path, 'trash', kwargs['item']+'.yml'))
         self._action = kwargs['action']
+        self._user = request.user
+        self._vcs = MyPyGit2(self._user)
+
         if 'where' in kwargs:
             self._where = kwargs['where']
         if 'target' in kwargs and kwargs['target']:
@@ -489,6 +538,8 @@ class ItemActionView(RequirementMixin, TemplateView):
         if 'index' in kwargs:
             self._index = kwargs['index']
         self._confirm = int(request.GET.get('confirm', '0'))
+
+        self._vcs.test()
 
         if not self._confirm:
             if self._action == 'link':
@@ -509,13 +560,10 @@ class ItemActionView(RequirementMixin, TemplateView):
                 self._item.review()
                 return self._base_redirect()
             elif self._action == 'delete':
-                if self._item.deleted:
-                    self._item.delete()
-                else:
-                    self._item.deleted = True
+                self.action_delete_item()
                 return HttpResponseRedirect("%s#%s" % (reverse('index-doc', args=[self._doc.prefix]), self._item.uid))
             elif self._action == 'restore':
-                self._item.deleted = False
+                self.action_restore_item()
                 return HttpResponseRedirect("%s#%s" % (reverse('index-doc', args=[self._doc.prefix]), self._item.uid))
             elif self._action == 'unlink':
                 self._item.unlink(self._target.uid)

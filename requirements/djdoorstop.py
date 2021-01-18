@@ -5,6 +5,9 @@ from doorstop import DoorstopError, Item
 from doorstop.core.base import auto_load, auto_save
 from doorstop.core.document import Document
 from doorstop.core.types import to_bool
+from doorstop import common, settings
+
+log = common.logger(__name__)
 
 
 class DjForeignField(object):
@@ -95,6 +98,42 @@ class DjDocument(Document):
         #  type: (str, str, Any) -> None
         super().__init__(path, root, **kwargs)
         self._foreign_fields = {}  # type: Dict[DjForeignField]
+
+    def _iter(self, reload=False):
+        """Yield the document's items."""
+        if self._itered and not reload:
+            msg = "iterating document {}'s loaded items...".format(self)
+            log.debug(msg)
+            yield from list(self._items)
+            return
+        log.info("loading document {}'s items...".format(self))
+        # Reload the document's item
+        self._items = []
+        filenames = []
+        for filename in os.listdir(self.path):
+            if os.path.isfile(os.path.join(self.path, filename)) and filename[-4:] == '.yml':
+                filenames.append(filename)
+        for filename in filenames:
+            path = os.path.join(self.path, filename)
+            try:
+                item = Item.factory(self, path, root=self.root, tree=self.tree)
+            except DoorstopError:
+                pass  # skip non-item files
+            else:
+                self._items.append(item)
+                if reload:
+                    try:
+                        item.load(reload=reload)
+                    except Exception:
+                        log.error("Unable to load: %s", item)
+                        raise
+                if settings.CACHE_ITEMS and self.tree:
+                    self.tree._item_cache[item.uid] = item  # pylint: disable=protected-access
+                    log.trace("cached item: {}".format(item))
+        # Set meta attributes
+        self._itered = True
+        # Yield items
+        yield from list(self._items)
 
     def load(self, reload=False):
         loaded = self._loaded

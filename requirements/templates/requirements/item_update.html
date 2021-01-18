@@ -1,20 +1,51 @@
 {% extends 'requirements/base.html' %}
 {% load crispy_forms_tags %}
+{% load octicons %}
 {% load render_table from django_tables2 %}
 
 {% block page_title %}DS {{ item.uid }}{% endblock %}
 {% block body_title %}  Document {{ doc.prefix }}{% endblock %}
-{% block head_center %}Requirement item {{ item.uid }}{% endblock %}
+
+{% block head_left %}
+<div class="nav-item dropdown">
+  <button class="btn btn-secondary dropdown-toggle" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+    Document {{ doc.prefix }}
+  </button>
+  <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
+    {% for doc in docs %}
+    <a class="dropdown-item" href="{% url 'index-doc' doc.prefix %}">{{ doc.prefix }}</a>
+    {% endfor %}
+  </div>
+</div>&nbsp
+<div class="nav-item btn-group">
+    <a class="btn btn-secondary" href="{% url 'index-doc' doc.prefix %}" title="Return to document index">{% octicon 'fold-up' %}</a>
+</div>
+&nbsp;
+<div class="nav-item btn-group">
+    {% if prev %}
+    <a type="button" title="Previous item" class="btn btn-outline-primary" href="{% url 'item-details' doc.prefix prev.uid %}" role="button">
+        {% octicon 'arrow-left' %}</a>
+    {% endif %}
+    <a type="button" title="Item details" class="btn btn-primary" href="{% url 'item-details' doc.prefix item.uid %}" role="button">
+        {% octicon 'eye' %}</a>
+    {% if next %}
+    <a type="button" title="Next item" class="btn btn-outline-primary" href="{% url 'item-details' doc.prefix next.uid %}" role="button">
+        {% octicon 'arrow-right' %}</a>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block head_center %}
+<div style="font-size: 1.25rem;" class="nav-item nav-link active">Edit item {{ item.uid }}</div>
+{% endblock %}
 
 {% block body_contents %}
 <div class="row">
-    <div class="col-md-3">
+    <div class="col-md-2">
         <p>Operations</p>
         <ul>
-            <li><a href="{% url 'index-doc' doc.prefix %}#{{ item.uid }}">Return to list of {{ doc.prefix }}</a></li>
             {% if from %}<li><a href="{% url 'item-details' from.document.prefix from.uid %}">Return to list of {{ from.uid }}</a></li>{% endif %}
             {% if item.uid != '__NEW__' %}
-            <li><a href="{% url 'item-details' doc.prefix item.uid %}">Show req. {{ item.uid }}</a></li>
             <li><a href="{% url 'item-action' doc.prefix item.uid 'disactivate' %}">Mark as inactive</a></li>
             <li><a href="{% url 'item-action' doc.prefix item.uid 'link' %}">Link to parent req</a></li>
             {% endif %}
@@ -24,7 +55,7 @@
         {% render_table table %}
         {% endif %}
      </div>
-    <div class="col-md-8">
+    <div class="col-md-10">
         {% crispy form %}
     </div>
     <div class="col-md-1"></div>

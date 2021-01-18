@@ -6,7 +6,7 @@
 {% load octicons %}
 
 {% block page_title %}DS {{ item.uid }}{% endblock %}
-{% block head_center %}Requirement item {{ item.uid }}{% endblock %}
+
 {% block head_left %}
 <div class="nav-item dropdown">
   <button class="btn btn-secondary dropdown-toggle" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
@@ -17,13 +17,31 @@
     <a class="dropdown-item" href="{% url 'index-doc' doc.prefix %}">{{ doc.prefix }}</a>
     {% endfor %}
   </div>
-</div>&nbsp
+</div>
+&nbsp;
 <div class="nav-item btn-group">
     <a class="btn btn-secondary" href="{% url 'index-doc' doc.prefix %}" title="Return to document index">{% octicon 'fold-up' %}</a>
 </div>
+&nbsp;
+<div class="nav-item btn-group">
+    {% if prev %}
+    <a type="button" title="Previous item" class="btn btn-outline-primary" href="{% url 'item-details' doc.prefix prev.uid %}" role="button">
+        {% octicon 'arrow-left' %}</a>
+    {% endif %}
+    {% if not item.deleted %}
+    <a type="button" title="Previous item" class="btn btn-outline-primary" href="{% url 'item-update' doc.prefix item.uid %}" role="button">
+        {% octicon 'pencil' %}</a>
+    {% endif %}
+    {% if next %}
+    <a type="button" title="Next item" class="btn btn-outline-primary" href="{% url 'item-details' doc.prefix next.uid %}" role="button">
+        {% octicon 'arrow-right' %}</a>
+    {% endif %}
+</div>
 {% endblock %}
 
-
+{% block head_center %}
+    <div style="font-size: 1.25rem;" class="nav-item nav-link active">Details of item {{ item.uid }}</div>
+{% endblock %}
 
 {% block head_extra %}
 {{ form.media }}
@@ -32,14 +50,9 @@
 
 {% block body_contents %}
 <div class="row">
-    <div class="col-md-3">
+    <div class="col-md-2">
         <p>Operations</p>
         <ul>
-            <li><a href="{% url 'index-doc' doc.prefix %}#{{ item.uid }}">Return to list of doc. {{ doc.prefix }}</a></li>
-            {% if prev %}<li><a href="{% url 'item-details' doc.prefix prev.uid %}">Go to prev req. {{ prev.uid }}</a></li>{% endif %}
-            {% if next %}<li><a href="{% url 'item-details' doc.prefix next.uid %}">Go to next req. {{ next.uid }}</a></li>{% endif %}
-            <li><a href="{% url 'item-update' doc.prefix item.uid %}">Update req. of {{ item.uid }}</a></li>
-            <li><a href="{% url 'item-rawfile' doc.prefix item.uid %}">Edit raw file of {{ item.uid }}</a></li>
             {% for dc in child_docs %}
                 <li><a href="{% url 'item-update-from' dc.prefix '__NEW__' item.uid %}">Add child to {{ dc.prefix }}</a></li>
             {% endfor %}
@@ -63,19 +76,8 @@
         {% endif %}
      </div>
 
-    <div id="item-details" class="col-md-8">
+    <div id="item-details" class="col-md-10">
         <h1>
-            <div class="btn-group">
-                {% if prev %}<a type="button" title="Previous item" class="btn btn-outline-primary" href="{% url 'item-details' doc.prefix prev.uid %}" role="button">
-                    {% octicon 'arrow-left' %}
-                </a>{% endif %}
-                {% if not item.deleted %}<a type="button" title="Previous item" class="btn btn-outline-primary" href="{% url 'item-update' doc.prefix item.uid %}" role="button">
-                    {% octicon 'pencil' %}
-                </a>{% endif %}
-                {% if next %}<a type="button" title="Next item" class="btn btn-outline-primary" href="{% url 'item-details' doc.prefix next.uid %}" role="button">
-                    {% octicon 'arrow-right' %}
-                </a>{% endif %}
-            </div>
             <div class="btn-group">
                 {% if not item.reviewed and not item.deleted %}
                 <a type="button" title="Review item" class="btn btn-outline-warning" href="{% url 'item-action' doc.prefix item.uid 'review' %}">

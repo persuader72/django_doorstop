@@ -1,0 +1,48 @@
+{% extends 'requirements/base.html' %}
+{% load render_table from django_tables2 %}
+{% load static %}
+{% load octicons %}
+
+{% block page_title %}DS {{ doc.prefix }}{% endblock %}
+
+{% block head_left %}
+<div class="nav-item dropdown">
+  <button class="btn btn-secondary dropdown-toggle" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+    Document {{ doc.prefix }}
+  </button>
+  <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
+    {% for doc in docs %}
+    <a class="dropdown-item" href="{% url 'index-doc' doc.prefix %}">{{ doc.prefix }}</a>
+    {% endfor %}
+  </div>
+</div>&nbsp;
+<div class="nav-item btn-group">
+    <a class="btn btn-secondary" href="{% url 'index-doc' doc.prefix %}" title="Return to document index">{% octicon 'fold-up' %}</a>
+</div>
+{% endblock %}
+
+{% block head_center %}
+<div style="font-size: 1.25rem;" class="nav-item nav-link active">Tashcan index for document {{ doc.prefix }}</div>
+{% endblock %}
+
+{% block head_extra %}
+    <link href="{% static 'requirements/index.css' %}" rel="stylesheet">
+{% endblock %}
+
+{% block body_contents %}
+<style>
+tr[data-heading='True'] {
+    background-color: #fffdaf;
+}
+</style>
+<div class="row">
+<div class="col-md-2">
+    <p>Operations</p>
+</div>
+<div class="col-md-10 items-list">
+    {% if warn %}<div class="alert alert-{{ warn.type }}" role="alert">{{ warn.text|safe }}</div>{% endif %}
+    {% render_table table %}
+</div>
+</div>
+{% endblock %}
+

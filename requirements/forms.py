@@ -211,6 +211,7 @@ class ItemUpdateForm(forms.Form):
     active = forms.BooleanField(required=False)
     normative = forms.BooleanField(required=False)
     pending = forms.BooleanField(required=False)
+    attach = forms.FileField(required=False, label='Attach file', help_text='Load attachment file')
 
     def init_foreign_string(self, name, field):
         initial = self._item.get(name) if self._item else ''
@@ -292,6 +293,7 @@ class ItemUpdateForm(forms.Form):
                 css_class='form-row'
             ),
             'text',
+            'attach',
             Row(*layout, css_class='form-row'),
             Submit('submit', 'Submit')
         )

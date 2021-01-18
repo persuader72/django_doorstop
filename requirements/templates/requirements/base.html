@@ -18,11 +18,14 @@
 <body>
     <div class="container-fluid">
         <nav class="navbar navbar-expand-md navbar-light bg-light fixed-top">
-            <a class="navbar-brand" href="#">DoorStop</a>
+            <a class="navbar-brand" href="#"><img src="{% static 'requirements/logo.png' %}" width="30" height="30" alt=""> DoorStop</a>
             <button type="button" class="navbar-toggler" data-toggle="collapse" data-target="#navbarCollapse"><span class="navbar-toggler-icon"></span></button>
             <div class="collapse navbar-collapse justify-content-between" id="navbarCollapse">
                 <div class="navbar-nav">
                     {% block head_left %}{% endblock %}
+                </div>
+                <div class="navbar-nav">
+                    {% block head_center %}{% endblock %}
                 </div>
                 <div class="navbar-nav">
                     {% if user.is_authenticated %}

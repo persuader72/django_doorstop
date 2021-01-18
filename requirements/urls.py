@@ -1,6 +1,6 @@
 from django.urls import path
 from .views import IndexView, ItemDetailView, ItemUpdateView, DocumentUpdateView, ItemActionView, ItemRawFileView, DocumentExportView, \
-    VersionControlView, FullGraphView, GrpahDataView, DocumentActionView, DocumentSourceView, FileDownloadView
+    VersionControlView, FullGraphView, GrpahDataView, DocumentActionView, DocumentSourceView, DocumentTrashcanView, FileDownloadView
 
 urlpatterns = [
     path('', IndexView.as_view(), name='index'),
@@ -25,6 +25,7 @@ urlpatterns = [
     path('doc/statistics/<slug:doc>', DocumentSourceView.as_view(), name='document-statistics'),
     path('doc/action/<slug:doc>/<slug:action>', DocumentActionView.as_view(), name='document-action'),
     path('doc/source/<slug:doc>', DocumentSourceView.as_view(), name='document-source'),
+    path('doc/trashcan/<slug:doc>', DocumentTrashcanView.as_view(), name='document-trashcan'),
     path('vcs/', VersionControlView.as_view(), name='vcs-show'),
     path('vcs/action/<slug:action>', VersionControlView.as_view(), name='vcs-action'),
 ]
