@@ -18,7 +18,8 @@
   </div>
 </div>&nbsp
 <div class="nav-item btn-group">
-    <a class="btn btn-secondary" href="{% url 'index-doc' doc.prefix %}" title="Return to document index">{% octicon 'fold-up' %}</a>
+    <a class="btn btn-secondary" href="{% url 'index-doc' doc.prefix %}{% if item.uid != '__NEW__' %}#{{ item.uid }}{% endif %}" title="Return to document index">{% octicon 'fold-up' %}</a>
+
 </div>
 &nbsp;
 <div class="nav-item btn-group">
