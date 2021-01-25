@@ -85,7 +85,7 @@
                 </a>
                 {% endif %}
                 {% if not item.cleared %}
-                <a type="button" title="Clear suspect links" class="btn btn-outline-warning" href="{% url 'item-action' doc.prefix item.uid 'review' %}">
+                <a type="button" title="Clear suspect links" class="btn btn-outline-warning" href="{% url 'item-action' doc.prefix item.uid 'clear' %}">
                     {% octicon 'issue-closed' %}
                 </a>
                 {% endif %}

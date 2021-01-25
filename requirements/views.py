@@ -19,7 +19,7 @@ from jsonview.views import JsonView
 from doorstop.core.item import UnknownItem
 from doorstop.core.validators.item_validator import ItemValidator
 from doorstop.core.types import UID
-from doorstop import Tree, Item, DoorstopError
+from doorstop import Tree, Item, DoorstopError, DoorstopInfo, DoorstopWarning
 from doorstop.core import Document
 from doorstop.core.builder import build
 
@@ -155,6 +155,31 @@ class VersionControlView(TemplateView):
         return context
 
 
+class DocumentIssesView(RequirementMixin, TemplateView):
+    template_name = 'requirements/issues.html'
+
+    def get(self, request, *args, **kwargs):
+        self._user = request.user
+        return super().get(request, *args, **kwargs)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['docs'] = self._tree.documents
+        issues = []
+        index = 1
+        for issue in self._tree.get_issues():
+            if isinstance(issue, DoorstopInfo):
+                cls = 'primary'
+            elif isinstance(issue, DoorstopWarning):
+                cls = 'warning'
+            elif isinstance(issue, DoorstopError):
+                cls = 'danger'
+            issues.append({'index': index, 'class': cls, 'message': str(issue)})
+            index += 1
+        context['issues'] = issues
+        return context
+
+
 class IndexView(RequirementMixin, SingleTableMixin, ListView):
     template_name = 'requirements/index.html'
     table_class = RequirementsTable
@@ -179,7 +204,6 @@ class IndexView(RequirementMixin, SingleTableMixin, ListView):
         return {'extra_columns': dynamic}
 
     def get_queryset(self):
-        # return self._doc.items
         return sorted(i for i in self._doc._iter() if i.active and (not i.deleted or self._user.has_perm('requirements.internal')))
 
 
@@ -218,7 +242,7 @@ class ItemDetailView(RequirementMixin, TemplateView):
         context['prev'] = self._prev
         context['next'] = self._next
         context['childs'] = self._item.find_child_items()
-        context['parents'] = [x for x in self._item.parent_items if not isinstance(x, UnknownItem) != '']
+        context['parents'] = [x for x in self._item.parent_items if not isinstance(x, UnknownItem)]
         if self._item.deleted:
             issues = []
         else:
@@ -311,7 +335,7 @@ class DocumentSourceView(RequirementMixin, TemplateView):
 class DocumentActionView(RequirementMixin, TemplateView):
     template_name = 'requirements/document_action.html'
 
-    ACTION_NAMES = {'import': 'Import', 'clean': 'Clean'}
+    ACTION_NAMES = {'import': 'Import', 'clean': 'Clean', 'reorder': 'Reorder'}
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -331,6 +355,8 @@ class DocumentActionView(RequirementMixin, TemplateView):
                     _i.clear()
                 return HttpResponseRedirect(reverse('index-doc', args=[self._doc.prefix]))
         else:
+            if self._action == 'reorder':
+                self._doc.index = True
             context = self.get_context_data()
             return self.render_to_response(context)
 
@@ -346,6 +372,11 @@ class DocumentActionView(RequirementMixin, TemplateView):
                     f.write(file.read())
                 import_from_xslx(self._doc)
                 return HttpResponseRedirect(reverse('index-doc', args=[self._doc.prefix]))
+            elif self._action == 'reorder':
+                with open(self._doc.index, 'w') as f:
+                    f.write(request.POST['itemIndex'])
+                self._doc.reorder()
+                return HttpResponseRedirect(reverse('index-doc', args=[self._doc.prefix]))
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -353,6 +384,11 @@ class DocumentActionView(RequirementMixin, TemplateView):
         context['action'] = self._action
         context['error'] = self._error
         context['action_name'] = DocumentActionView.ACTION_NAMES[self._action]
+        if self._action == 'reorder':
+            context['index'] = ''
+            if os.path.exists(self._doc.index):
+                with open(self._doc.index, 'r') as f:
+                    context['index'] = f.read()
         return context
 
 
@@ -464,8 +500,7 @@ class ItemUpdateView(RequirementMixin, TemplateView):
         context['prev'] = self._prev
         context['next'] = self._next
         context['form'] = self._form
-        context['parents'] = [x for x in self._item.parent_items if not isinstance(x, UnknownItem) != ''] \
-            if not isinstance(self._item, VirtualItem) else []
+        context['parents'] = [x for x in self._item.parent_items if not isinstance(x, UnknownItem)] if not isinstance(self._item, VirtualItem) else []
         if len(context['parents']) > 0:
             context['table'] = ParentRequirementTable(data=context['parents'], item=self._item)
         return context
@@ -560,8 +595,9 @@ class ItemActionView(RequirementMixin, TemplateView):
                 self._item.review()
                 return self._base_redirect()
             elif self._action == 'delete':
+                _prev, _item, _next = self.find_neighbours(self._doc, self._item.uid)
                 self.action_delete_item()
-                return HttpResponseRedirect("%s#%s" % (reverse('index-doc', args=[self._doc.prefix]), self._item.uid))
+                return HttpResponseRedirect("%s#%s" % (reverse('index-doc', args=[self._doc.prefix]), _prev.uid))
             elif self._action == 'restore':
                 self.action_restore_item()
                 return HttpResponseRedirect("%s#%s" % (reverse('index-doc', args=[self._doc.prefix]), self._item.uid))

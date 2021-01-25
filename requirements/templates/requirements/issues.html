@@ -1,0 +1,40 @@
+{% extends 'requirements/base.html' %}
+{% load render_table from django_tables2 %}
+{% load static %}
+{% load octicons %}
+
+{% block page_title %}DS {{ doc.prefix }}{% endblock %}
+
+{% block head_left %}
+<div class="nav-item dropdown">
+  <button class="btn btn-secondary dropdown-toggle" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+    Repository issues
+  </button>
+  <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
+    {% for doc in docs %}
+    <a class="dropdown-item" href="{% url 'index-doc' doc.prefix %}">{{ doc.prefix }}</a>
+    {% endfor %}
+  </div>
+</div>&nbsp;
+{% endblock %}
+
+{% block head_center %}
+<div style="font-size: 1.25rem;" class="nav-item nav-link active">Issues</div>
+{% endblock %}
+
+{% block head_extra %}
+    <link href="{% static 'requirements/index.css' %}" rel="stylesheet">
+{% endblock %}
+
+{% block body_contents %}
+<div class="row">
+    <div class="col-md-2">
+    </div>
+    <div class="col-md-10 items-list">
+        {% for issue in issues %}
+        <div class="alert alert-{{ issue.class }}" role="alert">{{ issue.index }} - {{ issue.message }}</div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}
+

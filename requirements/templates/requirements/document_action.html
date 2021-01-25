@@ -45,6 +45,28 @@
     </div>
 {% endif %}
 
+{% if action == 'reorder' %}
+    <div class="jumbotron">
+        <h1 class="display-4">Confirm reorder document items!</h1>
+        <p class="lead">Yor are about change the order of all item of document {{ doc.prefix }}.</p>
+        <hr class="my-4">
+        <p class="lead">
+            <form method="post" action="{% url 'document-action' doc.prefix 'reorder' %}">
+                {% csrf_token %}
+                <input type="hidden" name="confirm" value="1">
+                <div class="form-group">
+                    <label for="parentUid">Parent UID</label>
+                    <textarea rows="20" type="text" class="form-control" name="itemIndex" aria-describedby="parentUidHelp">
+                        {{ index }}
+                    </textarea>
+                    <small id="itemIndexHelp" class="form-text text-muted">Index for current document.</small>
+                </div>
+                <button type="submit" class="btn btn-primary">Reorder document</button>
+            </form>
+        </p>
+    </div>
+{% endif %}
+
     </div>
     <div class="col-md-1"></div>
 </div>

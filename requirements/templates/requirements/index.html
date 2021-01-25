@@ -20,7 +20,12 @@
     <a class="btn btn-secondary" href="{% url 'document-update' doc.prefix %}" title="Update document">{% octicon 'tools' %}</a>
     <a class="btn btn-secondary" href="{% url 'document-trashcan' doc.prefix %}" title="Document trashcan">{% octicon 'trash' %}</a>
     <a class="btn btn-secondary" href="{% url 'vcs-show' %}" title="Show versions control">{% octicon 'versions' %}</a>
-    <a class="btn btn-secondary" href="{% url 'document-statistics' doc.prefix %}" title="Show statistics">{% octicon 'question' %}</a>
+    <a class="btn btn-secondary" href="{% url 'issues' %}" title="Repository issues">{% octicon 'alert' %}</a>
+</div>&nbsp;
+<div class="nav-item btn-group">
+    <a class="btn btn-warning" href="{% url 'item-update' doc.prefix '__NEW__' %}" title="Create new item">{% octicon 'file' %}</a>
+    <a class="btn btn-warning" href="{% url 'document-action' doc.prefix 'reorder' %}" title="Rorder items in document">{% octicon 'list-ordered' %}</a>
+    <a class="btn btn-warning" href="{% url 'document-action' doc.prefix 'clean' %}" title="Clean all items">{% octicon 'issue-closed' %}</a>
 </div>&nbsp;
 <div class="nav-item btn-group">
     <a class="btn btn-primary" href="{% url 'document-export' doc.prefix %}" title="Esport as XLSX">{% octicon 'desktop-download' %}</a>
@@ -47,10 +52,8 @@ tr[data-heading='True'] {
 <div class="col-md-2">
     <p>Operations</p>
     <ul>
-        <li><a href="{% url 'item-update' doc.prefix '__NEW__' %}">Create new req in {{ doc.prefix }}</a></li>
         <li><a href="{% url 'document-source' doc.prefix %}">Show source</a></li>
         <li><a href="{% url 'document-action' doc.prefix 'import' %}">Import req. from xslx</a></li>
-        <li><a href="{% url 'document-action' doc.prefix 'clean' %}">Review and clean all items</a></li>
     </ul>
 </div>
 <div class="col-md-10 items-list">
