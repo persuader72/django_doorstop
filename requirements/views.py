@@ -476,9 +476,9 @@ class ItemUpdateView(RequirementMixin, TemplateView):
             self._prev, self._item, self._next = self.find_neighbours(self._doc, kwargs['item'])
             from_item = None
         else:
-            from_item = self._tree.find_item(kwargs['from']) if 'from' in kwargs else None
+            from_item = self._tree.find_item(kwargs['from']) if 'from' in kwargs and len(kwargs['from']) > 0 else None
             self._item = VirtualItem(from_item, self._doc.forgein_fields)
-        self._form = ItemUpdateForm(item=self._item, doc=self._doc)
+        self._form = ItemUpdateForm(item=self._item, doc=self._doc, from_item=from_item)
         context = self.get_context_data()
         context['from'] = from_item
         return self.render_to_response(context)
@@ -489,7 +489,6 @@ class ItemUpdateView(RequirementMixin, TemplateView):
             self._item = self._doc.find_item(kwargs['item'])
         self._form = ItemUpdateForm(data=request.POST, item=self._item, doc=self._doc)
         from_item = request.POST.get('from_item', None)
-        print(request.FILES)
         return self.form_valid(from_item) if self._form.is_valid() else self.form_invalid()
 
     def get_context_data(self, **kwargs):

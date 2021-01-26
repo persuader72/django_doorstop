@@ -4,7 +4,7 @@ from typing import Optional, List, Dict
 
 import yaml
 from crispy_forms.helper import FormHelper
-from crispy_forms.layout import Layout, Submit, Row, Column
+from crispy_forms.layout import Layout, Submit, Row, Column, Hidden
 
 from django import forms
 from django.contrib.auth.models import User
@@ -265,8 +265,8 @@ class ItemUpdateForm(forms.Form):
 
         return tuple(vv)
 
-    def __init__(self, data=None, item=None, doc=None):
-        # type: (Optional[QueryDict], Optional[Item], Optional[Document]) -> None
+    def __init__(self, data=None, item=None, doc=None, from_item=None):
+        # type: (Optional[QueryDict], Optional[Item], Optional[Document], Optional[Item]) -> None
         self._item = item  # type: Optional[Item]
         self._doc = doc  # type: Optional[Document]
         if self._doc is None and self._item is not None:
@@ -285,6 +285,7 @@ class ItemUpdateForm(forms.Form):
         if item is not None:
             self.helper.form_action = reverse('item-update', args=(self._doc.prefix, self._item.uid))
         self.helper.layout = Layout(
+            Hidden('from_item', from_item.uid if from_item is not None else ''),
             Row(
                 Column('uid', css_class='form-group col-md-3 mb-0'),
                 Column('header', css_class='form-group col-md-4 mb-0'),
