@@ -489,6 +489,8 @@ class ItemUpdateView(RequirementMixin, TemplateView):
             self._item = self._doc.find_item(kwargs['item'])
         self._form = ItemUpdateForm(data=request.POST, item=self._item, doc=self._doc)
         from_item = request.POST.get('from_item', None)
+        if from_item is not None and len(from_item) == 0:
+            from_item = None
         return self.form_valid(from_item) if self._form.is_valid() else self.form_invalid()
 
     def get_context_data(self, **kwargs):
