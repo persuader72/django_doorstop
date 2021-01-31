@@ -256,15 +256,17 @@ class ItemDetailView(RequirementMixin, TemplateView):
 
 class ItemAssetView(RequirementMixin, PathDownloadView):
     def __init__(self, **kwargs):
+        self._index = 0
         super().__init__(**kwargs)
 
     def get(self, request, *args, **kwargs):
         self._doc = self._tree.find_document(kwargs['doc'])
         self._item = self._doc.find_item(kwargs['item'])
+        self._index = int(kwargs['index'])
         return super().get(request, *args, **kwargs)
 
     def get_path(self):
-        return os.path.join(self._doc.path, self._item.references[0]['path'])
+        return os.path.join(self._doc.path, self._item.references[self._index]['path'])
 
 
 class DocumentUpdateView(RequirementMixin, TemplateView):

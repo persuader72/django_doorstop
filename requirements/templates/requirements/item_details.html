@@ -100,18 +100,16 @@
         <hr>
         {{ item.text|markdown:"safe, tables" }}
         <hr>
-        <div class="row">
+        <p>Referenced files:</p>
         {% for reference in item.references_list %}
-            <ul>
-                <li>Asset: <a target="_blank" href="{% url 'item-asset' doc.prefix item.uid %}">{{ reference.basename }}</a> -  MD5: {{ reference.md5 }}</li>
+            <ul class="list-group">
+                <li class="list-group-item list-group-item-primary">Asset: <a target="_blank" href="{% url 'item-asset' doc.prefix item.uid forloop.counter0 %}">{{ reference.basename }}</a> -  MD5: {{ reference.md5 }}</li>
             </ul>
         {% endfor %}
-        </div>
-        <div class="row">
+        <hr>
         {% for forgein in doc.forgein_fields %}
             <div class="col-md-2">{{ forgein }}: {{ item|foreign_field:forgein }}</div>
         {% endfor %}
-        </div>
         <hr>
         {% if issues %}
         <div class="alert alert-warning" role="alert">
