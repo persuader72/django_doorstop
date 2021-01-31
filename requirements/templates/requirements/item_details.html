@@ -99,6 +99,14 @@
         </em></p>
         <hr>
         {{ item.text|markdown:"safe, tables" }}
+        <hr>
+        <div class="row">
+        {% for reference in item.references_list %}
+            <ul>
+                <li>Asset: <a target="_blank" href="{% url 'item-asset' doc.prefix item.uid %}">{{ reference.basename }}</a> -  MD5: {{ reference.md5 }}</li>
+            </ul>
+        {% endfor %}
+        </div>
         <div class="row">
         {% for forgein in doc.forgein_fields %}
             <div class="col-md-2">{{ forgein }}: {{ item|foreign_field:forgein }}</div>

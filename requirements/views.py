@@ -12,7 +12,7 @@ from django.http import HttpResponseRedirect, FileResponse
 from django.urls import reverse, resolve
 from django.views.generic import ListView, TemplateView, DetailView
 from django.conf import settings
-from django_downloadview import VirtualDownloadView
+from django_downloadview import VirtualDownloadView, PathDownloadView
 from django_tables2 import SingleTableMixin
 
 from jsonview.views import JsonView
@@ -252,6 +252,19 @@ class ItemDetailView(RequirementMixin, TemplateView):
         context['comments'] = self._item.get('comments')
         context['form'] = self._form
         return context
+
+
+class ItemAssetView(RequirementMixin, PathDownloadView):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+
+    def get(self, request, *args, **kwargs):
+        self._doc = self._tree.find_document(kwargs['doc'])
+        self._item = self._doc.find_item(kwargs['item'])
+        return super().get(request, *args, **kwargs)
+
+    def get_path(self):
+        return os.path.join(self._doc.path, self._item.references[0]['path'])
 
 
 class DocumentUpdateView(RequirementMixin, TemplateView):

@@ -1,4 +1,5 @@
 import os
+import hashlib
 from typing import Any, Dict, Optional
 
 from doorstop import DoorstopError, Item
@@ -10,9 +11,39 @@ from doorstop import common, settings
 log = common.logger(__name__)
 
 
+class DjReference(object):
+    def __init__(self, _path, _type, _item):
+        #  type: (str, str, DjItem) -> None
+        self._path = _path
+        self._type = _type
+        self._item = _item  # type: DjItem
+
+    @property
+    def path(self):
+        return self._path
+
+    @property
+    def basename(self):
+        return os.path.basename(self.path)
+
+    @property
+    def full_path(self):
+        return os.path.join(self._item.document.path, self.path)
+    
+    @property
+    def md5(self):
+        return hashlib.md5(open(self.full_path, 'rb').read()).hexdigest().upper()
+
+    @property
+    def type(self):
+        return self._type
+
+
 class DjForeignField(object):
-    def __init__(self, data=None):
-        #  type: (Optional[Dict]) -> None
+    def __init__(self, name, data=None):
+        #  type: (str, Optional[Dict]) -> None
+        self._item = None
+        self._name = name
         self._type = 'string'
         self._description = ''
         self._choices = {}
@@ -27,6 +58,21 @@ class DjForeignField(object):
                     self._choices = value
                 else:
                     raise DoorstopError("unexpected attributes configuration '{}' in: {}".format(key, data))
+
+    @property
+    def name(self):
+        return self._name
+
+    @property
+    def data(self):
+        return None if self._item is None else self.value(self._item)
+
+    def value(self, item, sep=','):
+        # type: (DjItem, str) -> str
+        if self._type == 'string':
+            return item.get(self._name)
+        elif self._type == 'single':
+            return item.get(self._name)
 
 
 class DjItem(Item):
@@ -92,12 +138,20 @@ class DjItem(Item):
         """Set the item's active status."""
         self._data['pending'] = to_bool(value)
 
+    @property
+    def references_list(self):
+        references = []
+        if self.references is not None:
+            for r in self.references:
+                references.append(DjReference(r['path'], r['type'], self))
+        return references
+
 
 class DjDocument(Document):
     def __init__(self, path, root=os.getcwd(), **kwargs):
         #  type: (str, str, Any) -> None
         super().__init__(path, root, **kwargs)
-        self._foreign_fields = {}  # type: Dict[DjForeignField]
+        self._foreign_fields2 = {}  # type: Dict[DjForeignField]
 
     def _iter(self, reload=False):
         """Yield the document's items."""
@@ -141,14 +195,15 @@ class DjDocument(Document):
         if loaded and not reload:
             return
         data = self._load_with_include(self.config)
-        foreign_fields = data.get('foreign_fields', {})
+        attributes = data.get('attributes', {})
+        foreign_fields = attributes.get('foreign-fields', {})
         for key, value in foreign_fields.items():
-            self._foreign_fields[key] = DjForeignField(value)
+            self._foreign_fields2[key] = DjForeignField(key, value)
 
     def save(self):
         super().save()
 
     @property
-    def foreign_fields(self):
+    def foreign_fields2(self):
         #  type: () -> Dict[DjForeignField]
-        return self._foreign_fields
+        return self._foreign_fields2
